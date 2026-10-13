@@ -44,6 +44,14 @@ The map can be moved and zoomed within the city's limits:
 
 The map only redraws while something is moving, so an idle page uses almost no battery.
 
+## Flavour carousel
+
+Under the pickup point, customers see a **Popularne smaki / Popular flavours** carousel. They can swipe it, or use the arrows or dots.
+
+Below it, the **Zamów … na Instagramie** button opens a chat with the shop's Instagram account (`ig.me/m/snus.shop24`). Instagram doesn't let websites pre-fill a DM, so the page copies a ready-made order message when the button is tapped, and the customer pastes it into the chat. The message names the chosen flavour and includes the customer's last parcel number, so it's easy to see who's ordering.
+
+To add or change flavours, edit `products` in `config.js` and put photos in `assets/products/` (square photos work best). If a flavour has no `image`, the page draws a tin with its name instead.
+
 ## Branding
 
 Edit `config.js` to change the shop name used in the page title, the refresh interval and the default language.

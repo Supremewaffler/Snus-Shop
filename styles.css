@@ -174,6 +174,57 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .history .h-time { font-size: .8rem; color: var(--muted); }
 .history .h-desc { font-size: .9rem; color: var(--muted); margin-top: 2px; }
 
+/* Flavour carousel */
+.shop-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 12px; }
+.shop-head h2 { margin: 2px 0 0; }
+.car-arrows { display: flex; gap: 6px; }
+.car-arrow {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--card-2); color: var(--ink);
+  font-size: 1.4rem; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0 0 3px;
+}
+.car-arrow:disabled { opacity: .35; cursor: default; }
+.carousel {
+  display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  margin: 0 -20px; padding: 4px 20px 8px; scrollbar-width: none; outline: none;
+}
+.carousel::-webkit-scrollbar { display: none; }
+.carousel.single { justify-content: center; }
+.flavour {
+  flex: 0 0 min(64%, 230px); scroll-snap-align: center; cursor: pointer; text-align: left;
+  background: var(--card-2); border: 2px solid transparent; border-radius: 16px; padding: 12px; color: var(--ink); font: inherit;
+  transition: border-color .2s, transform .2s, opacity .2s; opacity: .7;
+}
+.flavour.active { border-color: var(--accent); opacity: 1; transform: translateY(-2px); }
+.flavour-img {
+  aspect-ratio: 1; border-radius: 12px; display: grid; place-items: center; overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, #34343d 0%, #16161b 70%);
+}
+.flavour-img img { width: 86%; height: 86%; object-fit: contain; filter: drop-shadow(0 10px 14px rgba(0,0,0,.6)); }
+.tin-art {
+  width: 78%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; text-align: center; padding: 12%;
+  background: radial-gradient(circle at 35% 30%, #3a3a44, #0d0d10 70%); border: 3px solid #5a5a63;
+  box-shadow: 0 12px 20px rgba(0,0,0,.6), inset 0 0 0 6px #18181d;
+  font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: 1rem; line-height: 1.15; color: #f2f0ea;
+}
+.flavour-name { font-weight: 800; margin-top: 10px; }
+.flavour-note { font-size: .82rem; color: var(--muted); }
+.car-dots { display: flex; justify-content: center; gap: 6px; margin: 8px 0 14px; }
+.car-dots button { width: 8px; height: 8px; border-radius: 4px; border: 0; padding: 0; background: var(--line); cursor: pointer; transition: width .2s, background .2s; }
+.car-dots button.on { width: 22px; background: var(--accent); }
+.car-dots:empty { display: none; }
+.ig-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  padding: 14px 18px; border-radius: 14px; text-decoration: none; font-weight: 800; color: #fff;
+  background: linear-gradient(90deg, #f58529, #dd2a7b 45%, #8134af 75%, #515bd4);
+}
+.ig-note { text-align: center; margin: 8px 0 0; }
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; z-index: 10;
+  background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 999px; font-weight: 800; font-size: .9rem;
+  transition: opacity .25s, transform .25s; pointer-events: none; max-width: calc(100% - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
 .foot { text-align: center; font-size: .8rem; margin: 0; }
 .err-rider { width: 160px; height: auto; margin: 0 auto 4px; display: block; }
 .maker-hero { display: flex; align-items: center; justify-content: center; gap: 8px; margin: -4px 0 12px; }
