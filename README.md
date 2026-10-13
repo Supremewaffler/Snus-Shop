@@ -50,7 +50,12 @@ Under the pickup point, customers see a **Popularne smaki / Popular flavours** c
 
 Below it, the **Zamów … na Instagramie** button opens a chat with the shop's Instagram account (`ig.me/m/snus.shop24`). Instagram doesn't let websites pre-fill a DM, so the page copies a ready-made order message when the button is tapped, and the customer pastes it into the chat. The message names the chosen flavour and includes the customer's last parcel number, so it's easy to see who's ordering.
 
-To add or change flavours, edit `products` in `config.js` and put photos in `assets/products/` (square photos work best). If a flavour has no `image`, the page draws a tin with its name instead.
+The flavours come from the shop's menu and are set in `config.js`:
+
+- **`lines`** lists the product lines: Pablo Exclusive 50 mg/g, Cuba Black 66 mg/g and K#rwa Collection Max 64 mg/g. Each has a strength and a tin rim colour. When there's more than one line, customers see filter buttons for them.
+- **`products`** lists the flavours. Each one has a line, a name, emoji and a colour.
+
+Without a photo, the page draws a tin in the flavour's colour, with the line name, emoji and strength. To use a real photo, put it in `assets/products/` (square works best) and add `image: "assets/products/<file>"` to that flavour. When stock changes, add, remove or reorder lines in `products`.
 
 ## Branding
 

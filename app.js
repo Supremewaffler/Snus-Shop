@@ -12,7 +12,7 @@
       dest: "Miejsce odbioru", history: "Historia przesyłki", source: "Dane na żywo z InPost", checked: "sprawdzono",
       approx: "Pozycja kuriera na mapie jest orientacyjna — przesuwa się z każdą aktualizacją InPost.",
       hint: "Użyj dwóch palców, aby przesuwać mapę", zoomIn: "Przybliż", zoomOut: "Oddal",
-      shopTitle: "Popularne smaki", order: "Zamów {product} na Instagramie", copied: "Wiadomość skopiowana — wklej ją w czacie",
+      shopTitle: "Popularne smaki", all: "Wszystkie", order: "Zamów {product} na Instagramie", copied: "Wiadomość skopiowana — wklej ją w czacie",
       igNote: "Wiadomość zostanie skopiowana — po otwarciu czatu wklej ją i wyślij.", prev: "Poprzedni", next: "Następny",
       orderMsg: "Cześć! Chcę zamówić {product} 🙂", orderRef: "Numer mojej ostatniej przesyłki: {number}",
       refresh: "Odśwież", refreshing: "Sprawdzam…", refreshed: "Aktualne ✓", refreshFail: "Brak połączenia",
@@ -38,7 +38,7 @@
       dest: "Pickup point", history: "Parcel history", source: "Live data from InPost", checked: "checked",
       approx: "The courier's position on the map is approximate — it moves with every InPost update.",
       hint: "Use two fingers to move the map", zoomIn: "Zoom in", zoomOut: "Zoom out",
-      shopTitle: "Popular flavours", order: "Order {product} on Instagram", copied: "Message copied — paste it in the chat",
+      shopTitle: "Popular flavours", all: "All", order: "Order {product} on Instagram", copied: "Message copied — paste it in the chat",
       igNote: "The message is copied for you — paste it in the chat and send.", prev: "Previous", next: "Next",
       orderMsg: "Hi! I'd like to order {product} 🙂", orderRef: "My last parcel number: {number}",
       refresh: "Refresh", refreshing: "Checking…", refreshed: "Up to date ✓", refreshFail: "No connection",
@@ -549,6 +549,7 @@
     setText("lblShopTitle", x.shopTitle); setText("igNote", x.igNote);
     $("carPrev").setAttribute("aria-label", x.prev); $("carNext").setAttribute("aria-label", x.next);
     updateOrderButton();
+    if ($("shopFilters").children.length) buildFilters();
     $("btnZoomIn").setAttribute("aria-label", x.zoomIn); $("btnZoomOut").setAttribute("aria-label", x.zoomOut); setText("lblFollow", x.follow); setText("lblFit", x.fit);
     setText("destMap", x.map);
     setText("mkTitle", x.mkTitle); setText("mkText", x.mkText); setText("mkBtn", x.mkBtn); setText("mkCopy", x.mkCopy);
@@ -782,44 +783,16 @@
   }
 
   // ---------- flavour carousel + Instagram order button ----------
-  var activeProduct = 0;
-  function buildShop() {
-    var list = CFG.products || [];
-    var car = $("carousel"), dots = $("carDots");
-    car.innerHTML = ""; dots.innerHTML = "";
-    car.classList.toggle("single", list.length === 1);
-    list.forEach(function (p, i) {
-      var card = document.createElement("button");
-      card.type = "button";
-      card.className = "flavour";
-      var art = document.createElement("div");
-      art.className = "flavour-img";
-      if (p.image) {
-        var img = document.createElement("img");
-        img.src = p.image; img.alt = p.name; img.loading = "lazy";
-        art.appendChild(img);
-      } else {
-        var tin = document.createElement("div");
-        tin.className = "tin-art"; tin.textContent = p.name;
-        art.appendChild(tin);
-      }
-      var name = document.createElement("div"); name.className = "flavour-name"; name.textContent = p.name;
-      card.appendChild(art); card.appendChild(name);
-      if (p.note) { var note = document.createElement("div"); note.className = "flavour-note"; note.textContent = p.note; card.appendChild(note); }
-      card.addEventListener("click", function () { selectProduct(i, true); });
-      car.appendChild(card);
-      if (list.length > 1) {
-        var dot = document.createElement("button");
-        dot.type = "button"; dot.setAttribute("aria-label", p.name);
-        dot.addEventListener("click", function () { selectProduct(i, true); });
-        dots.appendChild(dot);
-      }
-    });
-    $("carPrev").parentNode.hidden = list.length < 2;
+  var activeProduct = 0, shopFilter = "all", shopList = [], scrollLock = 0;
+  function lineOf(p) { return (CFG.lines || {})[p.line] || { name: "", short: "", strength: "" }; }
+  function productTitle(p) { var l = lineOf(p); return (l.name ? l.name + " – " : "") + p.name; }
+
+  function setupShop() {
+    var car = $("carousel"), raf = 0;
     // the card nearest the middle of the strip becomes the active one while swiping
-    var raf = 0;
     car.addEventListener("scroll", function () {
       cancelAnimationFrame(raf);
+      if (Date.now() < scrollLock) return; // our own animated scroll, not a swipe
       raf = requestAnimationFrame(function () {
         var mid = car.scrollLeft + car.clientWidth / 2, best = 0, bestD = Infinity;
         Array.prototype.forEach.call(car.children, function (c, i) {
@@ -830,9 +803,85 @@
       });
     });
     $("carPrev").addEventListener("click", function () { selectProduct(Math.max(0, activeProduct - 1), true); });
-    $("carNext").addEventListener("click", function () { selectProduct(Math.min(list.length - 1, activeProduct + 1), true); });
+    $("carNext").addEventListener("click", function () { selectProduct(Math.min(shopList.length - 1, activeProduct + 1), true); });
     $("igBtn").href = "https://ig.me/m/" + encodeURIComponent(CFG.instagram);
     $("igBtn").addEventListener("click", orderClick);
+    buildFilters();
+    buildShop();
+  }
+
+  function buildFilters() {
+    var box = $("shopFilters"), lines = CFG.lines || {}, used = {};
+    (CFG.products || []).forEach(function (p) { used[p.line] = true; });
+    var keys = Object.keys(lines).filter(function (k) { return used[k]; });
+    box.innerHTML = "";
+    if (keys.length < 2) { box.hidden = true; return; }
+    box.hidden = false;
+    ["all"].concat(keys).forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "filter-chip" + (k === shopFilter ? " on" : "");
+      b.textContent = k === "all" ? t().all : lines[k].name;
+      b.addEventListener("click", function () {
+        shopFilter = k;
+        Array.prototype.forEach.call(box.children, function (c) { c.classList.toggle("on", c === b); });
+        buildShop();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function drawTin(p) {
+    var l = lineOf(p);
+    var tin = document.createElement("div");
+    tin.className = "tin";
+    tin.style.setProperty("--rim", l.rim || "#d9d9de");
+    tin.style.setProperty("--tint", p.color || "#555");
+    [["tin-brand", l.short || l.name], ["tin-emoji", p.emoji || ""], ["tin-flavour", p.name], ["tin-mg", l.strength]].forEach(function (part) {
+      if (!part[1]) return;
+      var e = document.createElement("span");
+      e.className = part[0]; e.textContent = part[1];
+      tin.appendChild(e);
+    });
+    return tin;
+  }
+
+  function buildShop() {
+    shopList = (CFG.products || []).filter(function (p) { return shopFilter === "all" || p.line === shopFilter; });
+    var car = $("carousel"), dots = $("carDots");
+    car.innerHTML = ""; dots.innerHTML = "";
+    car.classList.toggle("single", shopList.length === 1);
+    shopList.forEach(function (p, i) {
+      var l = lineOf(p);
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "flavour";
+      var art = document.createElement("div");
+      art.className = "flavour-img";
+      if (p.image) {
+        var img = document.createElement("img");
+        img.src = p.image; img.alt = productTitle(p); img.loading = "lazy";
+        art.appendChild(img);
+      } else {
+        art.appendChild(drawTin(p));
+      }
+      var name = document.createElement("div"); name.className = "flavour-name"; name.textContent = p.name;
+      var note = document.createElement("div"); note.className = "flavour-note";
+      note.textContent = [l.name, l.strength].filter(Boolean).join(" · ");
+      card.appendChild(art); card.appendChild(name); card.appendChild(note);
+      card.addEventListener("click", function () { selectProduct(i, true); });
+      car.appendChild(card);
+      if (shopList.length > 1 && shopList.length <= 12) {
+        var dot = document.createElement("button");
+        dot.type = "button"; dot.setAttribute("aria-label", productTitle(p));
+        dot.addEventListener("click", function () { selectProduct(i, true); });
+        dots.appendChild(dot);
+      }
+    });
+    $("carPrev").parentNode.hidden = shopList.length < 2;
+    setText("shopCount", shopList.length > 1 ? (activeProduct + 1) + " / " + shopList.length : "");
+    car.scrollLeft = 0;
+    activeProduct = 0;
     selectProduct(0, false);
   }
   function selectProduct(i, scroll) {
@@ -843,17 +892,22 @@
     Array.prototype.forEach.call($("carDots").children, function (d, k) { d.classList.toggle("on", k === i); });
     $("carPrev").disabled = i === 0;
     $("carNext").disabled = i === cards.length - 1;
-    if (scroll) car.scrollTo({ left: cards[i].offsetLeft - (car.clientWidth - cards[i].offsetWidth) / 2 });
+    if (shopList.length > 1) setText("shopCount", (i + 1) + " / " + shopList.length);
+    if (scroll) {
+      scrollLock = Date.now() + 700;
+      car.scrollTo({ left: cards[i].offsetLeft - (car.clientWidth - cards[i].offsetWidth) / 2 });
+    }
     updateOrderButton();
   }
-  function currentProduct() { return (CFG.products || [])[activeProduct]; }
+  function currentProduct() { return shopList[activeProduct]; }
   function updateOrderButton() {
     var p = currentProduct();
     if (p) setText("igLabel", t().order.replace("{product}", p.name));
   }
   function orderMessage() {
-    var p = currentProduct(), x = t();
-    var msg = x.orderMsg.replace("{product}", p ? p.name : "");
+    var p = currentProduct(), x = t(), l = p ? lineOf(p) : {};
+    var what = p ? productTitle(p) + (l.strength ? " (" + l.strength + ")" : "") : "";
+    var msg = x.orderMsg.replace("{product}", what);
     if (number && !isDemo) msg += "\n" + x.orderRef.replace("{number}", prettyNumber(number));
     return msg;
   }
@@ -929,6 +983,6 @@
   if (!number) { setupMaker(); return; }
   if (number.length < 6 && !isDemo) { showError("bad"); return; }
   if (isDemo) buildDemoBar();
-  buildShop();
+  setupShop();
   loadStatuses().then(refresh);
 })();
