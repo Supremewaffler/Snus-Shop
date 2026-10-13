@@ -38,7 +38,17 @@ The city is generated in the browser (no map service or API key needed). Each tr
 
 ## Branding
 
-Edit `config.js` to change the shop name, the refresh interval and the default language.
+Edit `config.js` to change the shop name used in the page title, the refresh interval and the default language.
+
+The Snus Shop 24 artwork lives in `assets/`:
+
+- `wordmark.png`: the header logo
+- `logo.png`: the round logo on the link-maker page
+- `favicon.png` and `apple-touch-icon.png`: browser and home-screen icons
+- `rider.webp`: the courier on the map
+- `rider-large.webp`: the bigger rider on the link-maker page
+
+To update the artwork, replace these files with new versions of the same name and size.
 
 ## Hosting
 

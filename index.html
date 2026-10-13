@@ -3,16 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b0a24">
+<meta name="theme-color" content="#0a0a0d">
 <title>Śledzenie paczki</title>
 <meta name="description" content="Śledź swoją paczkę na żywo.">
 <meta name="robots" content="noindex">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛵</text></svg>">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" as="image" href="assets/rider.webp">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="logo">🛵</span> <span id="brandName">Snus Express</span></div>
+  <div class="brand"><img src="assets/wordmark.png" alt="Snus Shop 24" id="brandLogo" width="146" height="45"><span id="brandName" class="sr-only">Snus Shop 24</span></div>
   <button id="langBtn" class="chip-btn" type="button">EN</button>
 </header>
 
@@ -26,6 +28,13 @@
             <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="6" result="b"/>
               <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="riderGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="d"/>
+              <feFlood flood-color="#f2f0ea"/>
+              <feComposite in2="d" operator="in" result="o"/>
+              <feGaussianBlur in="o" stdDeviation="3" result="ob"/>
+              <feMerge><feMergeNode in="ob"/><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
             <filter id="pinShadow" x="-50%" y="-50%" width="200%" height="200%">
               <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity=".55"/>
@@ -89,13 +98,17 @@
 
   <!-- Error / not found -->
   <section id="errorView" class="card center" hidden>
-    <div class="big-emoji">🛵💨</div>
+    <img class="err-rider" src="assets/rider.webp" alt="" width="180" height="173">
     <h1 id="errTitle">Jeszcze nie ruszyliśmy</h1>
     <p id="errText" class="muted"></p>
   </section>
 
   <!-- Link maker (no ?p= in the URL) -->
-  <section id="makeView" class="card" hidden>
+  <section id="makeView" class="card maker" hidden>
+    <div class="maker-hero">
+      <img src="assets/logo.png" alt="Snus Shop 24" class="maker-logo" width="120" height="120">
+      <img src="assets/rider-large.webp" alt="" class="maker-rider" width="220" height="211">
+    </div>
     <h1 id="mkTitle">Utwórz link śledzenia</h1>
     <p id="mkText" class="muted">Wklej numer przesyłki InPost. Otrzymasz link, który możesz wysłać klientowi.</p>
     <form id="mkForm" class="mk-form">

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var CFG = Object.assign({ brandName: "Snus Express", boxLabel: "SNUS", refreshSeconds: 60, defaultLang: "pl" }, window.TRACK_CONFIG || {});
+  var CFG = Object.assign({ brandName: "Snus Shop 24", refreshSeconds: 60, defaultLang: "pl" }, window.TRACK_CONFIG || {});
   var API = "https://api-shipx-pl.easypack24.net/v1";
   var SVGNS = "http://www.w3.org/2000/svg";
 
@@ -302,37 +302,24 @@
       var p = ROUTE[v];
       var g = el("g", { "class": "marker pin", id: "stop" + idx, "data-x": p[0], "data-y": p[1] }, layer);
       drawPin(g, STOP_COLORS[idx], icons[idx], idx === 3 ? 1.35 : 1.1);
-      drawLabel(g, names[idx], idx === 3 ? -56 : -48);
+      drawLabel(g, names[idx], 18);
     });
   }
 
+  // Branded rider sprite, drawn in screen pixels with the wheels on the route point.
   var MOPED_SVG =
-    '<circle class="moped-pulse" r="26"/>' +
-    '<circle class="moped-badge" r="25"/>' +
-    '<g id="mopedArt"><g transform="translate(-18.6 -14) scale(.2)">' +
-      '<g class="mp-bob">' +
-        '<rect x="4" y="22" width="62" height="50" rx="8" class="mp-box"/>' +
-        '<ellipse cx="35" cy="50" rx="18" ry="10" class="mp-tin"/>' +
-        '<path d="M14 98C10 80 22 70 44 72L104 76C112 77 116 84 122 92L136 92 150 40 158 42 146 98Z" class="mp-body"/>' +
-        '<path d="M14 98H146L140 108H20Z" class="mp-dark"/>' +
-        '<rect x="40" y="64" width="62" height="12" rx="6" class="mp-dark"/>' +
-        '<rect x="144" y="34" width="22" height="8" rx="4" class="mp-dark"/>' +
-        '<path d="M74 66 100 94H120" class="mp-leg"/>' +
-        '<path d="M70 66 84 24" class="mp-torso"/>' +
-        '<path d="M82 32 118 44 148 38" class="mp-arm"/>' +
-        '<circle cx="88" cy="10" r="16" class="mp-helmet"/>' +
-        '<path d="M90 4h16a6 6 0 0 1 0 12H92z" class="mp-visor"/>' +
-      '</g>' +
-      '<g transform="translate(42 112)"><circle r="22" class="mp-tyre"/><circle r="12" class="mp-rim"/><path class="mp-spokes" d="M-12 0H12M0-12V12"/></g>' +
-      '<g transform="translate(158 112)"><circle r="22" class="mp-tyre"/><circle r="12" class="mp-rim"/><path class="mp-spokes" d="M-12 0H12M0-12V12"/></g>' +
-    '</g></g>';
+    '<ellipse class="moped-pulse" rx="42" ry="12"/>' +
+    '<ellipse class="rider-shadow" rx="34" ry="6"/>' +
+    '<g class="mp-bob">' +
+      '<image href="assets/rider.webp" x="-44" y="-82" width="88" height="84" filter="url(#riderGlow)"/>' +
+    '</g>';
 
   function buildMoped() {
     var layer = $("mopedLayer");
     layer.innerHTML = "";
     var g = el("g", { "class": "marker", id: "moped", "data-x": 0, "data-y": 0 }, layer);
     g.innerHTML = MOPED_SVG;
-    var tag = drawLabel(g, t().tag, -40);
+    var tag = drawLabel(g, t().tag, -96);
     tag.setAttribute("class", "mp-tag");
     tag.id = "mopedTag";
   }
@@ -352,7 +339,7 @@
   function routeView() {
     var xs = [], ys = [];
     ROUTE.forEach(function (p) { var r = rot(p); xs.push(r[0]); ys.push(r[1]); });
-    return fitBox(Math.min.apply(0, xs) - 20, Math.min.apply(0, ys) - 50, Math.max.apply(0, xs) + 20, Math.max.apply(0, ys) + 20);
+    return fitBox(Math.min.apply(0, xs) - 20, Math.min.apply(0, ys) - 60, Math.max.apply(0, xs) + 20, Math.max.apply(0, ys) + 40);
   }
   function followView() {
     var p = rot(pointAt(shown.d));
@@ -377,9 +364,8 @@
     }
     $("map").setAttribute("viewBox", cam.x + " " + cam.y + " " + cam.w + " " + cam.h);
     var unit = cam.w / ($("mapWrap").clientWidth || 1);
-    var raw = pointAt(shown.d), ahead = pointAt(Math.min(TOTAL, shown.d + 2)), back = pointAt(Math.max(0, shown.d - 2));
-    var hp = rot(ahead), hb = rot(back);
-    if (Math.abs(hp[0] - hb[0]) > 0.5) $("mopedArt").setAttribute("transform", hp[0] < hb[0] ? "scale(-1 1)" : "");
+    // The rider always faces right so the logo on the box stays readable.
+    var raw = pointAt(shown.d);
     var m = $("moped");
     m.setAttribute("data-x", raw[0]);
     m.setAttribute("data-y", raw[1]);
@@ -446,7 +432,7 @@
       want.ox = 0;
     } else {
       want.d = STOP_DIST[idx];
-      want.ox = 42; // park next to the pin rather than on top of it
+      want.ox = 66; // park next to the pin rather than on top of it
     }
   }
 
@@ -510,7 +496,9 @@
     setText("hudHead", x.hud[hudKey]);
     var st = statusText(current);
     setText("hudSub", st.title + (details[0] ? " · " + fmtDate(details[0].datetime) : ""));
-    setText("hudIcon", problem ? "⚠️" : delivered ? "✅" : moving ? "🛵" : ["🏭", "🔀", "📍", dest === "locker" ? "📦" : "🏠"][idx]);
+    var icon = $("hudIcon");
+    if (moving && !problem) icon.innerHTML = '<img src="assets/rider.webp" alt="">';
+    else icon.textContent = problem ? "⚠️" : delivered ? "✅" : ["🏭", "🔀", "📍", dest === "locker" ? "📦" : "🏠"][idx];
 
     // status card — InPost's own wording
     setText("statusTitle", st.title);
