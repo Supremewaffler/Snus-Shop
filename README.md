@@ -1,6 +1,6 @@
 # Moped parcel tracker
 
-A tracking page for InPost parcels. It shows the same live status as InPost, but the parcel rides to the customer on a little moped.
+A tracking page for InPost parcels. It shows the same live status as InPost, but on a game-style city map where a courier on a moped drives the parcel to the customer.
 
 - **No backend.** The page reads InPost's public tracking API (`api-shipx-pl.easypack24.net`) straight from the browser. It needs no API key.
 - **InPost's own wording.** Every status title and description comes from InPost's status list, in Polish or English, so customers see exactly what InPost says.
@@ -17,20 +17,28 @@ A tracking page for InPost parcels. It shows the same live status as InPost, but
 
 New parcels can take a few hours to appear at InPost. Until then the page says so and keeps checking.
 
-## What the moped does
+## The map
 
-| InPost status | Scene |
+The page shows a dark, game-style city map with four pins: **Warehouse — dispatch → InPost sorting hub → Local depot → your Paczkomat / home**. A courier on a moped drives along the glowing route between them:
+
+| InPost status | Moped |
 |---|---|
-| created / confirmed | parked outside the shop, waiting |
-| sent, at a branch or sorting centre | riding through town |
-| out for delivery | riding fast |
-| in the Paczkomat / ready to collect | parked at the locker (or house, for courier delivery) |
-| delivered | the box is gone and the locker is open |
-| returned, undelivered, expired… | stopped, with a warning sign |
+| created / confirmed | parked at the warehouse |
+| sent / collected | driving to the sorting hub |
+| at the sorting centre | parked at the hub |
+| sent from the sorting centre | driving to the local depot (crosses the bridge) |
+| at the destination branch | parked at the depot |
+| out for delivery | driving to the customer |
+| in the Paczkomat / delivered | parked at the customer's pin |
+| returned, undelivered, expired… | stopped, shown in red |
+
+InPost doesn't publish the courier's GPS position, so the map position is an estimate. Each InPost update moves the moped to the correct stage. Between updates it creeps closer to the next pin, based on how long that stage usually takes. The page tells customers the position is approximate.
+
+The city is generated in the browser (no map service or API key needed). Each tracking number gets its own city layout. On phones the map rotates so the route runs top-to-bottom. **Śledź / Follow** zooms in on the moped, and **Trasa / Route** shows the whole route.
 
 ## Branding
 
-Edit `config.js` to change the shop name, the label on the tin, the refresh interval and the default language.
+Edit `config.js` to change the shop name, the refresh interval and the default language.
 
 ## Hosting
 

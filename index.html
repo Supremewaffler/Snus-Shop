@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0a24">
 <title>Śledzenie paczki</title>
 <meta name="description" content="Śledź swoją paczkę na żywo.">
 <meta name="robots" content="noindex">
@@ -12,147 +13,57 @@
 <body>
 <header class="top">
   <div class="brand"><span class="logo">🛵</span> <span id="brandName">Snus Express</span></div>
-  <button id="langBtn" class="lang" type="button">EN</button>
+  <button id="langBtn" class="chip-btn" type="button">EN</button>
 </header>
 
 <main id="app">
   <!-- Tracking view -->
   <section id="trackView" hidden>
-    <div class="card scene-card">
-      <div id="scene" class="scene" data-state="riding">
-        <svg viewBox="0 0 800 280" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <div class="map-card">
+      <div id="mapWrap" class="map-wrap" data-state="riding">
+        <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Mapa trasy paczki" role="img">
           <defs>
-            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" class="sky-top"/><stop offset="1" class="sky-bot"/>
-            </linearGradient>
-            <g id="tree">
-              <rect x="-4" y="-10" width="8" height="30" fill="#7a5233"/>
-              <circle cx="0" cy="-26" r="22" class="leaf"/>
-              <circle cx="-12" cy="-14" r="14" class="leaf"/>
-              <circle cx="12" cy="-14" r="14" class="leaf"/>
-            </g>
-            <g id="house">
-              <rect x="0" y="-60" width="70" height="60" class="bldg"/>
-              <path d="M-6 -60 L35 -92 L76 -60Z" class="roof"/>
-              <rect x="12" y="-46" width="16" height="16" class="win"/>
-              <rect x="42" y="-46" width="16" height="16" class="win"/>
-              <rect x="27" y="-24" width="16" height="24" class="door"/>
-            </g>
-            <g id="block">
-              <rect x="0" y="-130" width="60" height="130" class="bldg2"/>
-              <g class="win">
-                <rect x="8" y="-120" width="12" height="14"/><rect x="24" y="-120" width="12" height="14"/><rect x="40" y="-120" width="12" height="14"/>
-                <rect x="8" y="-96" width="12" height="14"/><rect x="24" y="-96" width="12" height="14"/><rect x="40" y="-96" width="12" height="14"/>
-                <rect x="8" y="-72" width="12" height="14"/><rect x="24" y="-72" width="12" height="14"/><rect x="40" y="-72" width="12" height="14"/>
-                <rect x="8" y="-48" width="12" height="14"/><rect x="24" y="-48" width="12" height="14"/><rect x="40" y="-48" width="12" height="14"/>
-              </g>
-            </g>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="pinShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity=".55"/>
+            </filter>
           </defs>
-
-          <rect width="800" height="280" fill="url(#sky)"/>
-          <circle cx="680" cy="56" r="26" class="sun"/>
-          <g class="clouds layer" style="--dur:60s">
-            <g><ellipse cx="120" cy="60" rx="40" ry="12" class="cloud"/><ellipse cx="420" cy="40" rx="55" ry="14" class="cloud"/><ellipse cx="700" cy="80" rx="35" ry="10" class="cloud"/></g>
-            <g transform="translate(800 0)"><ellipse cx="120" cy="60" rx="40" ry="12" class="cloud"/><ellipse cx="420" cy="40" rx="55" ry="14" class="cloud"/><ellipse cx="700" cy="80" rx="35" ry="10" class="cloud"/></g>
-          </g>
-          <g class="hills layer" style="--dur:30s">
-            <path d="M0 200 Q100 130 200 190 T400 180 T600 175 T800 200 V280 H0Z" class="hill"/>
-            <path transform="translate(800 0)" d="M0 200 Q100 130 200 190 T400 180 T600 175 T800 200 V280 H0Z" class="hill"/>
-          </g>
-          <g class="town layer" style="--dur:12s">
-            <g><use href="#block" x="30" y="212"/><use href="#tree" x="130" y="200"/><use href="#house" x="180" y="212"/><use href="#tree" x="290" y="200"/><use href="#block" x="340" y="212"/><use href="#house" x="430" y="212"/><use href="#tree" x="540" y="200"/><use href="#block" x="590" y="212"/><use href="#tree" x="690" y="200"/><use href="#house" x="720" y="212"/></g>
-            <g transform="translate(800 0)"><use href="#block" x="30" y="212"/><use href="#tree" x="130" y="200"/><use href="#house" x="180" y="212"/><use href="#tree" x="290" y="200"/><use href="#block" x="340" y="212"/><use href="#house" x="430" y="212"/><use href="#tree" x="540" y="200"/><use href="#block" x="590" y="212"/><use href="#tree" x="690" y="200"/><use href="#house" x="720" y="212"/></g>
-          </g>
-          <rect x="0" y="212" width="800" height="68" class="road"/>
-          <rect x="0" y="212" width="800" height="5" class="curb"/>
-          <g class="dashes layer" style="--dur:1.2s">
-            <g id="dashrow"><rect x="0" y="244" width="50" height="5" class="dash"/><rect x="100" y="244" width="50" height="5" class="dash"/><rect x="200" y="244" width="50" height="5" class="dash"/><rect x="300" y="244" width="50" height="5" class="dash"/><rect x="400" y="244" width="50" height="5" class="dash"/><rect x="500" y="244" width="50" height="5" class="dash"/><rect x="600" y="244" width="50" height="5" class="dash"/><rect x="700" y="244" width="50" height="5" class="dash"/></g>
-            <use href="#dashrow" x="800"/>
-          </g>
-
-          <!-- Start: shop (shown while waiting to be sent) -->
-          <g class="prop prop-shop" transform="translate(70 214)">
-            <rect x="0" y="-110" width="150" height="110" class="shop"/>
-            <path d="M-8 -110 h166 l-10 26 h-146z" class="awning"/>
-            <path d="M8 -84 l10 -26 M38 -84 l6 -26 M68 -84 v-26 M98 -84 l-6 -26 M128 -84 l-10 -26" class="awning-stripe"/>
-            <rect x="14" y="-70" width="56" height="40" class="win"/>
-            <rect x="92" y="-64" width="40" height="64" class="door"/>
-            <text x="75" y="-118" text-anchor="middle" class="shop-label" id="shopLabel">SNUS</text>
-          </g>
-
-          <!-- End: parcel locker -->
-          <g class="prop prop-locker" transform="translate(560 214)">
-            <rect x="0" y="-130" width="170" height="130" rx="6" class="locker"/>
-            <rect x="0" y="-130" width="170" height="22" rx="6" class="locker-top"/>
-            <text x="85" y="-114" text-anchor="middle" class="locker-label">PACZKOMAT</text>
-            <g class="locker-doors">
-              <rect x="10" y="-100" width="44" height="28"/><rect x="10" y="-68" width="44" height="28"/><rect x="10" y="-36" width="44" height="28"/>
-              <rect x="116" y="-100" width="44" height="28"/><rect x="116" y="-68" width="44" height="28"/><rect x="116" y="-36" width="44" height="28"/>
-            </g>
-            <rect x="60" y="-100" width="50" height="40" rx="3" class="locker-screen"/>
-            <rect class="locker-open" x="116" y="-68" width="44" height="28"/>
-          </g>
-
-          <!-- End: customer's house (courier delivery) -->
-          <g class="prop prop-home" transform="translate(590 214)">
-            <rect x="0" y="-100" width="140" height="100" class="bldg"/>
-            <path d="M-12 -100 L70 -150 L152 -100Z" class="roof"/>
-            <rect x="16" y="-78" width="30" height="26" class="win"/>
-            <rect x="94" y="-78" width="30" height="26" class="win"/>
-            <rect x="55" y="-46" width="30" height="46" class="door"/>
-            <text x="70" y="-112" text-anchor="middle" class="home-label">🏠</text>
-          </g>
-
-          <!-- Moped + rider -->
-          <g id="moped" class="moped" transform="translate(300 150)">
-            <g class="puffs">
-              <circle class="puff p1" cx="-8" cy="98" r="7"/><circle class="puff p2" cx="-8" cy="98" r="7"/><circle class="puff p3" cx="-8" cy="98" r="7"/>
-            </g>
-            <ellipse cx="100" cy="132" rx="96" ry="7" class="shadow"/>
-            <g class="bob">
-              <!-- delivery box with the tin -->
-              <g class="cargo">
-                <rect x="4" y="22" width="62" height="50" rx="6" class="box"/>
-                <rect x="4" y="22" width="62" height="12" rx="6" class="box-lid"/>
-                <ellipse cx="35" cy="56" rx="20" ry="11" class="tin"/>
-                <ellipse cx="35" cy="53" rx="20" ry="11" class="tin-top"/>
-                <text x="35" y="57" text-anchor="middle" class="tin-label" id="tinLabel">SNUS</text>
-              </g>
-              <!-- body -->
-              <path d="M14 98 C10 80 22 70 44 72 L104 76 C112 77 116 84 122 92 L136 92 L150 40 L158 42 L146 98 Z" class="body"/>
-              <path d="M128 102 C134 82 168 78 182 100" class="fender"/>
-              <path d="M14 98 L146 98 L140 106 L20 106 Z" class="body-dark"/>
-              <rect x="40" y="64" width="62" height="12" rx="6" class="seat"/>
-              <rect x="144" y="34" width="22" height="7" rx="3" class="bar"/>
-              <circle cx="166" cy="50" r="6" class="lamp"/>
-              <!-- rider -->
-              <g class="rider">
-                <path d="M74 66 L100 94 L120 94" class="leg"/>
-                <path d="M70 66 L84 24" class="torso"/>
-                <path d="M82 32 L118 44 L148 38" class="arm"/>
-                <circle cx="88" cy="10" r="16" class="helmet"/>
-                <path d="M90 4 h16 a6 6 0 0 1 0 12 h-14z" class="visor"/>
-              </g>
-            </g>
-            <g class="wheel" transform="translate(42 112)"><circle r="22" class="tyre"/><circle r="12" class="rim"/><g class="spokes"><path d="M-12 0 H12 M0 -12 V12 M-8.5 -8.5 L8.5 8.5 M-8.5 8.5 L8.5 -8.5"/></g></g>
-            <g class="wheel" transform="translate(158 112)"><circle r="22" class="tyre"/><circle r="12" class="rim"/><g class="spokes"><path d="M-12 0 H12 M0 -12 V12 M-8.5 -8.5 L8.5 8.5 M-8.5 8.5 L8.5 -8.5"/></g></g>
-            <g class="warn" transform="translate(36 -6)"><path d="M0 -26 L24 16 H-24Z" class="warn-tri"/><text y="10" text-anchor="middle" class="warn-mark">!</text></g>
+          <rect id="sea" x="-5000" y="-5000" width="10000" height="10000"/>
+          <g id="world">
+            <g id="city"></g>
+            <g id="routeLayer"></g>
+            <g id="poiLayer"></g>
+            <g id="pinLayer"></g>
+            <g id="mopedLayer"></g>
           </g>
         </svg>
-        <div id="sceneBubble" class="bubble"></div>
-      </div>
 
-      <ol id="route" class="route"></ol>
+        <div class="hud hud-top">
+          <span id="liveChip" class="live-chip"><span class="dot"></span><b id="lblLive">NA ŻYWO</b></span>
+          <div class="hud-btns">
+            <button type="button" id="btnFollow" class="chip-btn">🛵 <span id="lblFollow">Śledź</span></button>
+            <button type="button" id="btnFit" class="chip-btn">🗺️ <span id="lblFit">Trasa</span></button>
+          </div>
+        </div>
+        <div class="hud hud-bottom">
+          <div class="hud-card">
+            <div id="hudIcon" class="hud-icon">🛵</div>
+            <div class="hud-text">
+              <div id="hudHead" class="hud-head">…</div>
+              <div id="hudSub" class="hud-sub"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ol id="route" class="steps"></ol>
     </div>
 
     <div class="card status-card">
-      <div class="status-head">
-        <div>
-          <div class="eyebrow" id="lblStatus">Status</div>
-          <h1 id="statusTitle">…</h1>
-        </div>
-        <span id="liveDot" class="live"><span></span><b id="lblLive">Na żywo</b></span>
-      </div>
+      <div class="eyebrow" id="lblStatus">Status InPost</div>
+      <h1 id="statusTitle">…</h1>
       <p id="statusDesc" class="status-desc"></p>
       <dl class="facts">
         <div><dt id="lblNumber">Numer przesyłki</dt><dd id="trkNumber" class="mono"></dd></div>
@@ -173,7 +84,7 @@
       <ol id="history" class="history"></ol>
     </div>
 
-    <p class="foot muted"><span id="lblSource">Dane na żywo z InPost</span> · <span id="lblChecked">sprawdzono</span> <span id="checkedAt"></span></p>
+    <p class="foot muted"><span id="lblSource">Dane na żywo z InPost</span> · <span id="lblChecked">sprawdzono</span> <span id="checkedAt"></span><br><span id="lblApprox">Pozycja kuriera na mapie jest orientacyjna.</span></p>
   </section>
 
   <!-- Error / not found -->

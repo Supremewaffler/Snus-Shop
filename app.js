@@ -3,19 +3,25 @@
 
   var CFG = Object.assign({ brandName: "Snus Express", boxLabel: "SNUS", refreshSeconds: 60, defaultLang: "pl" }, window.TRACK_CONFIG || {});
   var API = "https://api-shipx-pl.easypack24.net/v1";
+  var SVGNS = "http://www.w3.org/2000/svg";
 
   // ---------- UI text ----------
   var T = {
     pl: {
-      status: "Status", live: "Na żywo", paused: "Wstrzymano", number: "Numer przesyłki", updated: "Ostatnia aktualizacja",
+      status: "Status InPost", live: "NA ŻYWO", done: "ZAKOŃCZONO", number: "Numer przesyłki", updated: "Ostatnia aktualizacja",
       dest: "Miejsce odbioru", history: "Historia przesyłki", source: "Dane na żywo z InPost", checked: "sprawdzono",
-      map: "Mapa ↗", hours: "Godziny otwarcia: ",
-      stages: ["Przygotowana", "Nadana", "W drodze", "W doręczeniu", "Gotowe"],
-      bubbles: {
-        waiting: "Pakujemy i czekamy na kuriera…", riding: "Jadę do Ciebie! 🛵", fast: "Już prawie u Ciebie! 💨",
-        arrived: "Dojechałem — czekam na Ciebie! 📦", done: "Dostarczone. Smacznego! ✅", problem: "Mamy mały postój…"
+      approx: "Pozycja kuriera na mapie jest orientacyjna — przesuwa się z każdą aktualizacją InPost.",
+      map: "Mapa ↗", hours: "Godziny otwarcia: ", follow: "Śledź", fit: "Trasa", tag: "Twoja paczka",
+      pins: ["Magazyn — wysyłka", "Sortownia InPost", "Oddział lokalny"],
+      destPin: { locker: "Twój Paczkomat", home: "Twój dom" },
+      steps: ["Magazyn", "Sortownia", "Oddział", { locker: "Paczkomat", home: "Twój dom" }],
+      hud: {
+        at0: "Magazyn — pakujemy i przygotowujemy wysyłkę", mov0: "Wyjechało z magazynu — jedzie do sortowni",
+        at1: "Paczka jest w sortowni InPost", mov1: "W trasie do Twojego miasta",
+        at2: "Paczka w oddziale lokalnym — zaraz ruszamy do Ciebie", mov2: "Kurier jedzie do Ciebie!",
+        at3locker: "Czeka na Ciebie w Paczkomacie — możesz odebrać!", at3home: "Kurier jest pod Twoim domem!",
+        delivered: "Dostarczone. Smacznego! ✅", problem: "Mamy mały postój — szczegóły poniżej"
       },
-      lastStage: { locker: "Do odbioru", home: "Doręczona" },
       errTitle: "Jeszcze nie ruszyliśmy", errNotFound: "InPost nie ma jeszcze informacji o tej przesyłce. Zwykle pojawiają się kilka godzin po nadaniu — strona sama się odświeży.",
       errNet: "Nie udało się połączyć z InPost. Spróbujemy ponownie za chwilę.", errBad: "Ten link wygląda na niepełny. Poproś sprzedawcę o nowy.",
       mkTitle: "Utwórz link śledzenia", mkText: "Wklej numer przesyłki InPost. Otrzymasz link, który możesz wysłać klientowi.",
@@ -23,15 +29,20 @@
       mkPh: "np. 6800 1234 5678 9012 3456 7890", demo: "Tryb demo — kliknij etap:"
     },
     en: {
-      status: "Status", live: "Live", paused: "Paused", number: "Tracking number", updated: "Last update",
+      status: "InPost status", live: "LIVE", done: "COMPLETE", number: "Tracking number", updated: "Last update",
       dest: "Pickup point", history: "Parcel history", source: "Live data from InPost", checked: "checked",
-      map: "Map ↗", hours: "Opening hours: ",
-      stages: ["Prepared", "Sent", "On the way", "Out for delivery", "Ready"],
-      bubbles: {
-        waiting: "Packing up, waiting for the courier…", riding: "On my way to you! 🛵", fast: "Almost there! 💨",
-        arrived: "Arrived — waiting for you! 📦", done: "Delivered. Enjoy! ✅", problem: "Quick pit stop…"
+      approx: "The courier's position on the map is approximate — it moves with every InPost update.",
+      map: "Map ↗", hours: "Opening hours: ", follow: "Follow", fit: "Route", tag: "Your parcel",
+      pins: ["Warehouse — dispatch", "InPost sorting hub", "Local depot"],
+      destPin: { locker: "Your Paczkomat", home: "Your home" },
+      steps: ["Warehouse", "Sorting", "Depot", { locker: "Paczkomat", home: "Your home" }],
+      hud: {
+        at0: "Warehouse — packing and dispatching your order", mov0: "Left the warehouse — heading to the sorting hub",
+        at1: "Your parcel is at the InPost sorting hub", mov1: "On the road to your city",
+        at2: "At the local depot — heading your way soon", mov2: "The courier is on the way to you!",
+        at3locker: "Waiting for you in the Paczkomat — go collect it!", at3home: "The courier is at your door!",
+        delivered: "Delivered. Enjoy! ✅", problem: "Quick pit stop — details below"
       },
-      lastStage: { locker: "Ready to collect", home: "Delivered" },
       errTitle: "Not on the road yet", errNotFound: "InPost has no information about this parcel yet. It usually appears a few hours after it is sent — this page refreshes by itself.",
       errNet: "Couldn't reach InPost. Trying again shortly.", errBad: "This link looks incomplete. Ask the seller for a new one.",
       mkTitle: "Create a tracking link", mkText: "Paste an InPost tracking number to get a link you can send to the customer.",
@@ -40,20 +51,20 @@
     }
   };
 
-  // ---------- InPost status -> stage on the route ----------
-  // 0 prepared, 1 sent, 2 on the way, 3 out for delivery, 4 ready/delivered
-  var STAGE = {
-    created: 0, offers_prepared: 0, offer_selected: 0, confirmed: 0,
-    dispatched_by_sender: 1, dispatched_by_sender_to_pok: 1, collected_from_sender: 1, taken_by_courier: 1, taken_by_courier_from_pok: 1,
-    adopted_at_source_branch: 2, sent_from_source_branch: 2, adopted_at_sorting_center: 2, sent_from_sorting_center: 2,
-    adopted_at_target_branch: 2, redirect_to_box: 2, canceled_redirect_to_box: 2, readdressed: 2, delay_in_delivery: 2,
-    unstack_from_customer_service_point: 2, unstack_from_box_machine: 2,
-    out_for_delivery: 3, out_for_delivery_to_address: 3, pickup_reminder_sent_address: 3,
-    ready_to_pickup: 4, ready_to_pickup_from_pok: 4, ready_to_pickup_from_pok_registered: 4, pickup_reminder_sent: 4,
-    stack_in_box_machine: 4, stack_in_customer_service_point: 4, courier_avizo_in_customer_service_point: 4, ready_to_pickup_from_branch: 4,
-    delivered: 4
-  };
+  // ---------- InPost status -> where the moped is ----------
+  // Stops: 0 warehouse, 1 sorting hub, 2 local depot, 3 customer.
+  // "at N" = parked at stop N, "mov N" = driving from stop N towards N+1.
+  var POS = {};
+  function pos(key, names) { names.split(" ").forEach(function (n) { POS[n] = key; }); }
+  pos("at0", "created offers_prepared offer_selected confirmed");
+  pos("mov0", "dispatched_by_sender dispatched_by_sender_to_pok collected_from_sender taken_by_courier taken_by_courier_from_pok adopted_at_source_branch sent_from_source_branch");
+  pos("at1", "adopted_at_sorting_center");
+  pos("mov1", "sent_from_sorting_center redirect_to_box canceled_redirect_to_box readdressed");
+  pos("at2", "adopted_at_target_branch unstack_from_customer_service_point unstack_from_box_machine");
+  pos("mov2", "out_for_delivery out_for_delivery_to_address pickup_reminder_sent_address");
+  pos("at3", "ready_to_pickup ready_to_pickup_from_pok ready_to_pickup_from_pok_registered pickup_reminder_sent stack_in_box_machine stack_in_customer_service_point courier_avizo_in_customer_service_point ready_to_pickup_from_branch delivered");
   var PROBLEM = /^(pickup_time_expired|avizo|claimed|returned_to_sender|canceled|rejected_by_receiver|undelivered.*|missing|oversized|stack_.*expired|taken_by_courier_from_customer_service_point|return_pickup_confirmation_to_sender)$/;
+  var LEG_HOURS = [6, 10, 5]; // typical time per leg, used to creep the moped forward between updates
 
   // ---------- helpers ----------
   var $ = function (id) { return document.getElementById(id); };
@@ -63,10 +74,10 @@
   })();
   var params = new URLSearchParams(location.search);
   var number = (params.get("p") || params.get("n") || "").replace(/[^0-9A-Za-z]/g, "");
-  var statusDict = {};      // name -> {title, description} in current language
+  var isDemo = number.toLowerCase() === "demo";
+  var statusDict = {};
   var lastData = null;
   var timer = null;
-  var demoStep = 4;
 
   function t() { return T[lang]; }
   function setText(id, v) { var el = $(id); if (el) el.textContent = v; }
@@ -77,6 +88,12 @@
     return d.toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   }
   function prettyNumber(n) { return n.replace(/(.{4})/g, "$1 ").trim(); }
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
 
   function loadStatuses() {
     var key = "trk-statuses-" + lang;
@@ -100,99 +117,409 @@
     return { title: name ? name.replace(/_/g, " ") : "—", description: "" };
   }
 
-  // ---------- rendering ----------
+  // =====================================================================
+  //  MAP
+  // =====================================================================
+  var GRID = 44, AVE = 132, ANGLE = -12, CX = 700, CY = 700; // ANGLE is set per screen shape in initMap
+  // Route along the avenues: warehouse -> sorting hub -> (bridge) -> depot -> customer
+  var ROUTE = [[264, 396], [528, 396], [528, 660], [1056, 660], [1188, 660], [1188, 1056]];
+  var STOP_VERTEX = [0, 2, 3, 5];
+  var routeLen = [0];
+  for (var i = 1; i < ROUTE.length; i++) {
+    routeLen.push(routeLen[i - 1] + Math.hypot(ROUTE[i][0] - ROUTE[i - 1][0], ROUTE[i][1] - ROUTE[i - 1][1]));
+  }
+  var TOTAL = routeLen[routeLen.length - 1];
+  var STOP_DIST = STOP_VERTEX.map(function (v) { return routeLen[v]; });
+
+  function riverX(y) { return 820 + 55 * Math.sin(y / 190); }
+  function coastX(y) { return -180 + 40 * Math.sin(y / 150); }
+  function southY(x) { return 1560 + 40 * Math.sin(x / 170); }
+  function rot(p) {
+    var a = ANGLE * Math.PI / 180, dx = p[0] - CX, dy = p[1] - CY;
+    return [CX + dx * Math.cos(a) - dy * Math.sin(a), CY + dx * Math.sin(a) + dy * Math.cos(a)];
+  }
+  function pointAt(d) {
+    d = Math.max(0, Math.min(TOTAL, d));
+    for (var i = 1; i < ROUTE.length; i++) {
+      if (d <= routeLen[i]) {
+        var f = (d - routeLen[i - 1]) / ((routeLen[i] - routeLen[i - 1]) || 1);
+        return [ROUTE[i - 1][0] + f * (ROUTE[i][0] - ROUTE[i - 1][0]), ROUTE[i - 1][1] + f * (ROUTE[i][1] - ROUTE[i - 1][1])];
+      }
+    }
+    return ROUTE[ROUTE.length - 1];
+  }
+  function seeded(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return function () {
+      h += 0x6D2B79F5;
+      var x = Math.imul(h ^ (h >>> 15), 1 | h);
+      x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function buildCity(seed) {
+    var rnd = seeded(seed);
+    var out = [];
+    out.push("<g>");
+    out.push('<rect class="land" x="-800" y="-800" width="3000" height="3000"/>');
+    // avenues (show through the gaps between blocks)
+    for (var a = -6; a <= 16; a++) {
+      out.push('<line class="avenue" x1="' + a * AVE + '" y1="-800" x2="' + a * AVE + '" y2="2200"/>');
+      out.push('<line class="avenue" x1="-800" y1="' + a * AVE + '" x2="2200" y2="' + a * AVE + '"/>');
+    }
+    // parks
+    var parks = [[5, 1, 3, 3]];
+    for (var p = 0; p < 7; p++) parks.push([Math.floor(rnd() * 34) - 6, Math.floor(rnd() * 34) - 6, 1 + Math.floor(rnd() * 3), 1 + Math.floor(rnd() * 3)]);
+    function inPark(i, j) {
+      for (var k = 0; k < parks.length; k++) {
+        var q = parks[k];
+        if (i >= q[0] * 3 && i < (q[0] + q[2]) * 3 && j >= q[1] * 3 && j < (q[1] + q[3]) * 3) return true;
+      }
+      return false;
+    }
+    parks.forEach(function (q) {
+      out.push('<rect class="park" x="' + (q[0] * AVE + 4) + '" y="' + (q[1] * AVE + 4) + '" width="' + (q[2] * AVE - 8) + '" height="' + (q[3] * AVE - 8) + '" rx="6"/>');
+      for (var n = 0; n < q[2] * q[3] * 9; n++) {
+        out.push('<circle class="tree" cx="' + (q[0] * AVE + 12 + rnd() * (q[2] * AVE - 24)).toFixed(0) + '" cy="' + (q[1] * AVE + 12 + rnd() * (q[3] * AVE - 24)).toFixed(0) + '" r="' + (4 + rnd() * 6).toFixed(1) + '"/>');
+      }
+    });
+    // building blocks
+    var gap = 7, cls = ["b1", "b2", "b3", "b4"];
+    for (var i = -14; i < 40; i++) {
+      for (var j = -14; j < 40; j++) {
+        var x = i * GRID, y = j * GRID, cxm = x + GRID / 2;
+        if (inPark(i, j)) continue;
+        if (Math.abs(cxm - riverX(y + GRID / 2)) < 62 + GRID / 2) continue;
+        if (x < coastX(y) || y + GRID > southY(cxm)) continue;
+        var bx = x + gap / 2, by = y + gap / 2, s = GRID - gap, r = rnd();
+        var c = function () { return cls[Math.floor(rnd() * 4)]; };
+        if (r < 0.35) out.push('<rect class="' + c() + '" x="' + bx + '" y="' + by + '" width="' + s + '" height="' + s + '"/>');
+        else if (r < 0.7) {
+          var w = Math.round(s * (0.35 + rnd() * 0.3));
+          out.push('<rect class="' + c() + '" x="' + bx + '" y="' + by + '" width="' + (w - 1) + '" height="' + s + '"/>');
+          out.push('<rect class="' + c() + '" x="' + (bx + w + 1) + '" y="' + by + '" width="' + (s - w - 1) + '" height="' + s + '"/>');
+        } else {
+          var h2 = s / 2;
+          out.push('<rect class="' + c() + '" x="' + bx + '" y="' + by + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
+          out.push('<rect class="' + c() + '" x="' + (bx + h2 + 1) + '" y="' + by + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
+          out.push('<rect class="' + c() + '" x="' + bx + '" y="' + (by + h2 + 1) + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
+          out.push('<rect class="' + c() + '" x="' + (bx + h2 + 1) + '" y="' + (by + h2 + 1) + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
+        }
+      }
+    }
+    // water: river, west coast, south coast
+    var L = [], R = [];
+    for (var yy = -900; yy <= 2300; yy += 20) { L.push((riverX(yy) - 62) + "," + yy); R.unshift((riverX(yy) + 62) + "," + yy); }
+    var river = L.concat(R).join(" ");
+    var west = ["-3000,-900"];
+    for (yy = -900; yy <= 2300; yy += 20) west.push(coastX(yy) + "," + yy);
+    west.push("-3000,2300");
+    var south = ["-900,3000"];
+    for (var xx = -900; xx <= 2300; xx += 20) south.push(xx + "," + southY(xx));
+    south.push("2300,3000");
+    [river, west.join(" "), south.join(" ")].forEach(function (pts) {
+      out.push('<polygon class="water" points="' + pts + '"/><polygon class="water-edge" points="' + pts + '"/>');
+    });
+    // bridges (the route crosses on the y=660 one)
+    [264, 660, 1188].forEach(function (by) {
+      var rx = riverX(by);
+      out.push('<rect class="bridge" x="' + (rx - 76) + '" y="' + (by - 10) + '" width="152" height="20" rx="3"/>');
+      out.push('<line class="bridge-rail" x1="' + (rx - 76) + '" y1="' + (by - 10) + '" x2="' + (rx + 76) + '" y2="' + (by - 10) + '"/>');
+      out.push('<line class="bridge-rail" x1="' + (rx - 76) + '" y1="' + (by + 10) + '" x2="' + (rx + 76) + '" y2="' + (by + 10) + '"/>');
+    });
+    out.push("</g>");
+    $("city").innerHTML = out.join("");
+
+    // route
+    var d = "M" + ROUTE.map(function (p) { return p.join(" "); }).join(" L");
+    $("routeLayer").innerHTML =
+      '<path class="route-glow" d="' + d + '"/>' +
+      '<path class="route-todo" d="' + d + '"/>' +
+      '<path id="routeDone" class="route-done" d="' + d + '" stroke-dasharray="0 ' + (TOTAL + 50) + '"/>';
+
+    // decorative points of interest, like a game map
+    var poiLayer = $("poiLayer");
+    poiLayer.innerHTML = "";
+    var kinds = ["coffee", "tree", "bag", "star", "gym", "music"];
+    var colors = ["#4ee08a", "#5ef2ff", "#b06cff", "#ff8a3d", "#ff4f7a", "#58c8ff"];
+    var placed = 0, tries = 0, pois = [];
+    while (placed < 18 && tries++ < 400) {
+      var px = -300 + rnd() * 1900, py = -300 + rnd() * 1800;
+      if (Math.abs(px - riverX(py)) < 90 || px < coastX(py) + 40 || py > southY(px) - 40) continue;
+      var near = false;
+      for (var q = 0; q <= 40; q++) { var rp = pointAt(TOTAL * q / 40); if (Math.hypot(rp[0] - px, rp[1] - py) < 110) { near = true; break; } }
+      for (q = 0; q < pois.length && !near; q++) if (Math.hypot(pois[q][0] - px, pois[q][1] - py) < 140) near = true;
+      if (near) continue;
+      pois.push([px, py]);
+      var k = Math.floor(rnd() * kinds.length);
+      var g = el("g", { "class": "marker poi", "data-x": px, "data-y": py }, poiLayer);
+      drawPin(g, colors[k], ICONS[kinds[k]], 0.72);
+      placed++;
+    }
+  }
+
+  var ICONS = {
+    warehouse: "M3 11l9-6 9 6v9H3z M7 20v-6h10v6 M7 17h10",
+    sort: "M4 8h13l-3-3 M20 16H7l3 3",
+    depot: "M5 20V5h14v15 M9 9h2 M13 9h2 M9 13h2 M13 13h2 M10 20v-3h4v3",
+    home: "M3 11l9-7 9 7 M6 9.5V20h12V9.5 M10 20v-5h4v5",
+    locker: "M5 3h14v18H5z M12 3v18 M5 9h7 M5 15h7 M12 12h7",
+    coffee: "M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z M16 10h2a2 2 0 0 1 0 4h-2 M8 4v2 M12 4v2",
+    tree: "M12 3l6 10H6z M12 13v7",
+    bag: "M5 8h14l-1 12H6z M9 8a3 3 0 0 1 6 0",
+    star: "M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9-4.3-4.1 5.9-.8z",
+    gym: "M3 12h18 M6 7v10 M18 7v10 M3 9v6 M21 9v6",
+    music: "M9 18V6l10-2v12 M9 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0 M19 16a2 2 0 1 1-4 0 2 2 0 0 1 4 0"
+  };
+
+  // Teardrop pin, drawn in screen pixels with its tip at (0,0).
+  function drawPin(g, color, icon, size) {
+    var s = el("g", { transform: "scale(" + size + ")", "class": "pin-body", style: "color:" + color }, g);
+    el("circle", { "class": "ring", cx: 0, cy: -27, r: 18 }, s);
+    el("path", { d: "M0 0C-4-10-15-16-15-27a15 15 0 1 1 30 0C15-16 4-10 0 0z", fill: color, stroke: "rgba(0,0,0,.35)", "stroke-width": 1.5 }, s);
+    el("path", { d: icon, transform: "translate(-9 -36) scale(.75)", fill: "none", stroke: "#fff", "stroke-width": 2.4, "stroke-linecap": "round", "stroke-linejoin": "round" }, s);
+    return s;
+  }
+  function drawLabel(g, text, y) {
+    var w = Math.round(text.length * 6.3 + 18);
+    var lg = el("g", { "class": "pin-label", transform: "translate(0 " + y + ")" }, g);
+    el("rect", { x: -w / 2, y: -11, width: w, height: 22, rx: 11 }, lg);
+    var tx = el("text", { x: 0, y: 4, "text-anchor": "middle" }, lg);
+    tx.textContent = text;
+    return lg;
+  }
+
+  var STOP_COLORS = ["#ff8a3d", "#b06cff", "#58c8ff", "#4ee08a"];
+  function buildPins(dest) {
+    var layer = $("pinLayer");
+    layer.innerHTML = "";
+    var x = t();
+    var names = x.pins.concat([x.destPin[dest]]);
+    var icons = [ICONS.warehouse, ICONS.sort, ICONS.depot, dest === "locker" ? ICONS.locker : ICONS.home];
+    STOP_VERTEX.forEach(function (v, idx) {
+      var p = ROUTE[v];
+      var g = el("g", { "class": "marker pin", id: "stop" + idx, "data-x": p[0], "data-y": p[1] }, layer);
+      drawPin(g, STOP_COLORS[idx], icons[idx], idx === 3 ? 1.35 : 1.1);
+      drawLabel(g, names[idx], idx === 3 ? -56 : -48);
+    });
+  }
+
+  var MOPED_SVG =
+    '<circle class="moped-pulse" r="26"/>' +
+    '<circle class="moped-badge" r="25"/>' +
+    '<g id="mopedArt"><g transform="translate(-18.6 -14) scale(.2)">' +
+      '<g class="mp-bob">' +
+        '<rect x="4" y="22" width="62" height="50" rx="8" class="mp-box"/>' +
+        '<ellipse cx="35" cy="50" rx="18" ry="10" class="mp-tin"/>' +
+        '<path d="M14 98C10 80 22 70 44 72L104 76C112 77 116 84 122 92L136 92 150 40 158 42 146 98Z" class="mp-body"/>' +
+        '<path d="M14 98H146L140 108H20Z" class="mp-dark"/>' +
+        '<rect x="40" y="64" width="62" height="12" rx="6" class="mp-dark"/>' +
+        '<rect x="144" y="34" width="22" height="8" rx="4" class="mp-dark"/>' +
+        '<path d="M74 66 100 94H120" class="mp-leg"/>' +
+        '<path d="M70 66 84 24" class="mp-torso"/>' +
+        '<path d="M82 32 118 44 148 38" class="mp-arm"/>' +
+        '<circle cx="88" cy="10" r="16" class="mp-helmet"/>' +
+        '<path d="M90 4h16a6 6 0 0 1 0 12H92z" class="mp-visor"/>' +
+      '</g>' +
+      '<g transform="translate(42 112)"><circle r="22" class="mp-tyre"/><circle r="12" class="mp-rim"/><path class="mp-spokes" d="M-12 0H12M0-12V12"/></g>' +
+      '<g transform="translate(158 112)"><circle r="22" class="mp-tyre"/><circle r="12" class="mp-rim"/><path class="mp-spokes" d="M-12 0H12M0-12V12"/></g>' +
+    '</g></g>';
+
+  function buildMoped() {
+    var layer = $("mopedLayer");
+    layer.innerHTML = "";
+    var g = el("g", { "class": "marker", id: "moped", "data-x": 0, "data-y": 0 }, layer);
+    g.innerHTML = MOPED_SVG;
+    var tag = drawLabel(g, t().tag, -40);
+    tag.setAttribute("class", "mp-tag");
+    tag.id = "mopedTag";
+  }
+
+  // ---------- camera ----------
+  var cam = { x: 0, y: 0, w: 1000, h: 1000 }, camTarget = null, follow = false;
+  var shown = { d: 0, ox: 0 }, want = { d: 0, ox: 0 };
+  var PAD = { top: 96, bottom: 128, side: 90 };
+
+  function fitBox(minX, minY, maxX, maxY) {
+    var wrap = $("mapWrap"), W = wrap.clientWidth || 1, H = wrap.clientHeight || 1;
+    var aw = Math.max(50, W - PAD.side * 2), ah = Math.max(50, H - PAD.top - PAD.bottom);
+    var k = Math.max((maxX - minX) / aw, (maxY - minY) / ah);
+    var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    return { x: cx - k * W / 2, y: cy - k * (PAD.top + ah / 2), w: k * W, h: k * H };
+  }
+  function routeView() {
+    var xs = [], ys = [];
+    ROUTE.forEach(function (p) { var r = rot(p); xs.push(r[0]); ys.push(r[1]); });
+    return fitBox(Math.min.apply(0, xs) - 20, Math.min.apply(0, ys) - 50, Math.max.apply(0, xs) + 20, Math.max.apply(0, ys) + 20);
+  }
+  function followView() {
+    var p = rot(pointAt(shown.d));
+    return fitBox(p[0] - 260, p[1] - 200, p[0] + 260, p[1] + 200);
+  }
+  function setFollow(on) {
+    follow = on;
+    $("btnFollow").classList.toggle("on", on);
+    $("btnFit").classList.toggle("on", !on);
+    camTarget = on ? followView() : routeView();
+  }
+
+  var rafOn = false;
+  function tick() {
+    // ease moped along the route
+    shown.d += (want.d - shown.d) * 0.06;
+    shown.ox += (want.ox - shown.ox) * 0.08;
+    if (Math.abs(want.d - shown.d) < 0.3) shown.d = want.d;
+    if (follow) camTarget = followView();
+    if (camTarget) {
+      ["x", "y", "w", "h"].forEach(function (k) { cam[k] += (camTarget[k] - cam[k]) * 0.08; });
+    }
+    $("map").setAttribute("viewBox", cam.x + " " + cam.y + " " + cam.w + " " + cam.h);
+    var unit = cam.w / ($("mapWrap").clientWidth || 1);
+    var raw = pointAt(shown.d), ahead = pointAt(Math.min(TOTAL, shown.d + 2)), back = pointAt(Math.max(0, shown.d - 2));
+    var hp = rot(ahead), hb = rot(back);
+    if (Math.abs(hp[0] - hb[0]) > 0.5) $("mopedArt").setAttribute("transform", hp[0] < hb[0] ? "scale(-1 1)" : "");
+    var m = $("moped");
+    m.setAttribute("data-x", raw[0]);
+    m.setAttribute("data-y", raw[1]);
+    document.querySelectorAll("#map .marker").forEach(function (g) {
+      var p = rot([+g.getAttribute("data-x"), +g.getAttribute("data-y")]);
+      if (g === m) p[0] += shown.ox * unit;
+      g.setAttribute("transform", "translate(" + p[0] + " " + p[1] + ") scale(" + unit + ")");
+    });
+    $("routeDone").setAttribute("stroke-dasharray", shown.d + " " + (TOTAL + 50));
+    requestAnimationFrame(tick);
+  }
+
+  var mapReady = false;
+  function setAngle() {
+    var wrap = $("mapWrap");
+    ANGLE = wrap.clientWidth / Math.max(1, wrap.clientHeight) < 0.9 ? 38 : -12; // portrait: run the route top-to-bottom
+    var tf = "rotate(" + ANGLE + " " + CX + " " + CY + ")";
+    $("city").setAttribute("transform", tf);
+    $("routeLayer").setAttribute("transform", tf);
+  }
+  function initMap(dest) {
+    if (!mapReady) {
+      buildCity(number || "x");
+      setAngle();
+      mapReady = true;
+    }
+    buildPins(dest);
+    buildMoped();
+    if (!rafOn) {
+      rafOn = true;
+      var rv = routeView();
+      cam = { x: rv.x - rv.w * 0.15, y: rv.y - rv.h * 0.15, w: rv.w * 1.3, h: rv.h * 1.3 };
+      setFollow(false);
+      requestAnimationFrame(tick);
+    }
+  }
+
+  // =====================================================================
+  //  RENDER
+  // =====================================================================
+  var placement = null; // {key, since}
   function applyStaticText() {
     var x = t();
     document.documentElement.lang = lang;
     $("langBtn").textContent = lang === "pl" ? "EN" : "PL";
     setText("brandName", CFG.brandName);
-    setText("tinLabel", CFG.boxLabel);
-    setText("shopLabel", CFG.boxLabel);
     setText("lblStatus", x.status); setText("lblNumber", x.number); setText("lblUpdated", x.updated);
     setText("lblDest", x.dest); setText("lblHistory", x.history); setText("lblSource", x.source); setText("lblChecked", x.checked);
+    setText("lblApprox", x.approx); setText("lblFollow", x.follow); setText("lblFit", x.fit);
     setText("destMap", x.map);
     setText("mkTitle", x.mkTitle); setText("mkText", x.mkText); setText("mkBtn", x.mkBtn); setText("mkCopy", x.mkCopy);
     setText("mkOpen", x.mkOpen); setText("mkDemo", x.mkDemo); $("mkInput").placeholder = x.mkPh;
   }
 
-  function sceneState(stage, problem, delivered) {
-    if (problem) return "problem";
-    if (delivered) return "done";
-    return ["waiting", "riding", "riding", "fast", "arrived"][stage];
+  // Where along the route the moped should be right now.
+  function updateMopedTarget() {
+    if (!placement) return;
+    var key = placement.key, idx = +key.slice(-1);
+    if (key.indexOf("mov") === 0) {
+      var hours = (Date.now() - placement.since) / 3600e3;
+      var f = 0.06 + 0.86 * (1 - Math.exp(-1.5 * hours / LEG_HOURS[idx]));
+      if (placement.stopped) f = Math.min(f, 0.5);
+      want.d = STOP_DIST[idx] + f * (STOP_DIST[idx + 1] - STOP_DIST[idx]);
+      want.ox = 0;
+    } else {
+      want.d = STOP_DIST[idx];
+      want.ox = 42; // park next to the pin rather than on top of it
+    }
   }
-
-  // On narrow screens the scene is cropped at the sides, so pull the props inwards.
-  function placeProps(state) {
-    var scene = $("scene");
-    var narrow = scene.clientWidth / Math.max(1, scene.clientHeight) < 2.4;
-    var pos = narrow
-      ? { shop: 150, waiting: 300, riding: 300, arrived: 290, locker: 480, home: 500 }
-      : { shop: 70, waiting: 230, riding: 300, arrived: 340, locker: 560, home: 590 };
-    var x = state === "waiting" ? pos.waiting : (state === "arrived" || state === "done") ? pos.arrived : pos.riding;
-    $("moped").setAttribute("transform", "translate(" + x + " 150)");
-    document.querySelector(".prop-shop").setAttribute("transform", "translate(" + pos.shop + " 214)");
-    document.querySelector(".prop-locker").setAttribute("transform", "translate(" + pos.locker + " 214)");
-    document.querySelector(".prop-home").setAttribute("transform", "translate(" + pos.home + " 214)");
-  }
-  window.addEventListener("resize", function () { var st = $("scene").dataset.state; if (st && lastData) placeProps(st); });
 
   function render(data) {
+    var first = !lastData;
     lastData = data;
     var x = t();
     var details = (data.tracking_details || []).slice().sort(function (a, b) { return new Date(b.datetime) - new Date(a.datetime); });
     var current = data.status || (details[0] && details[0].status) || "created";
-
-    // stage = furthest known stage from the history, so odd statuses don't jump backwards
-    var stage = STAGE[current];
-    if (stage === undefined) {
-      stage = 0;
-      details.forEach(function (d) { if (STAGE[d.status] > stage) stage = STAGE[d.status]; });
-    }
     var problem = PROBLEM.test(current);
     var delivered = current === "delivered";
+
+    // most recent event we can place on the map
+    var key = POS[current], since = details[0] ? new Date(details[0].datetime).getTime() : Date.now();
+    if (!key) {
+      for (var i = 0; i < details.length; i++) {
+        if (POS[details[i].status]) { key = POS[details[i].status]; since = new Date(details[i].datetime).getTime(); break; }
+      }
+    }
+    key = key || "at0";
+    var idx = +key.slice(-1), moving = key.indexOf("mov") === 0;
 
     var attrs = data.custom_attributes || {};
     var machine = attrs.target_machine_detail;
     var dest = machine || /locker|paczkomat/i.test(data.service || data.type || "") ? "locker" : "home";
 
-    // scene
-    var scene = $("scene");
-    var state = sceneState(stage, problem, delivered);
-    scene.dataset.state = state;
-    scene.dataset.dest = dest;
-    placeProps(state);
-    setText("sceneBubble", x.bubbles[state]);
+    show("trackView");
+    initMap(dest);
+    placement = { key: key, since: since, stopped: problem };
+    if (first) { shown.d = moving ? STOP_DIST[idx] : Math.max(0, STOP_DIST[idx] - 60); }
+    updateMopedTarget();
 
-    // route
-    var labels = x.stages.slice();
-    labels[4] = x.lastStage[dest];
+    var wrap = $("mapWrap");
+    wrap.dataset.state = problem ? "problem" : delivered ? "done" : moving ? "riding" : "parked";
+    $("mopedTag").style.display = moving ? "" : "none";
+
+    // pins: done / target
+    for (var s = 0; s < 4; s++) {
+      var pin = $("stop" + s);
+      pin.classList.toggle("done", s < idx || (s === idx && !moving));
+      pin.classList.toggle("target", !delivered && !problem && (moving ? s === idx + 1 : s === idx));
+    }
+
+    // step bar
     var route = $("route");
     route.innerHTML = "";
     route.classList.toggle("problem", problem);
-    labels.forEach(function (label, i) {
+    x.steps.forEach(function (label, s) {
       var li = document.createElement("li");
-      li.textContent = label;
-      if (i < stage || (i === stage && delivered)) li.className = "done";
-      if (i === stage) {
-        li.className = delivered ? "done current" : "current";
-        var m = document.createElement("span");
-        m.className = "mini";
-        m.textContent = problem ? "⚠️" : (i === 4 ? "📦" : "🛵");
-        li.appendChild(m);
-      }
+      li.textContent = typeof label === "string" ? label : label[dest];
+      var cls = [];
+      if (s <= idx) cls.push("done");
+      if (!moving && s === idx) cls.push("current");
+      if (moving && s === idx + 1) cls.push(problem ? "current" : "leg");
+      li.className = cls.join(" ");
       route.appendChild(li);
     });
 
+    // HUD
+    var hudKey = problem ? "problem" : delivered ? "delivered" : key === "at3" ? "at3" + dest : key;
+    setText("hudHead", x.hud[hudKey]);
+    var st = statusText(current);
+    setText("hudSub", st.title + (details[0] ? " · " + fmtDate(details[0].datetime) : ""));
+    setText("hudIcon", problem ? "⚠️" : delivered ? "✅" : moving ? "🛵" : ["🏭", "🔀", "📍", dest === "locker" ? "📦" : "🏠"][idx]);
+
     // status card — InPost's own wording
-    var s = statusText(current);
-    setText("statusTitle", s.title);
-    setText("statusDesc", s.description);
+    setText("statusTitle", st.title);
+    setText("statusDesc", st.description);
     setText("trkNumber", prettyNumber(data.tracking_number || number));
     var upd = details[0] ? details[0].datetime : data.updated_at;
     setText("trkUpdated", fmtDate(upd));
     $("factUpdated").hidden = !upd;
 
-    // destination
     if (machine) {
       $("dest").hidden = false;
       setText("destName", machine.name || attrs.target_machine_id || "");
@@ -209,27 +536,23 @@
       $("dest").hidden = true;
     }
 
-    // history — every event InPost lists, newest first
     var ol = $("history");
     ol.innerHTML = "";
     details.forEach(function (d) {
-      var st = statusText(d.status);
+      var s2 = statusText(d.status);
       var li = document.createElement("li");
       var time = document.createElement("div"); time.className = "h-time"; time.textContent = fmtDate(d.datetime);
-      var title = document.createElement("div"); title.className = "h-title"; title.textContent = st.title;
+      var title = document.createElement("div"); title.className = "h-title"; title.textContent = s2.title;
       li.appendChild(time); li.appendChild(title);
-      if (st.description) { var desc = document.createElement("div"); desc.className = "h-desc"; desc.textContent = st.description; li.appendChild(desc); }
+      if (s2.description) { var desc = document.createElement("div"); desc.className = "h-desc"; desc.textContent = s2.description; li.appendChild(desc); }
       ol.appendChild(li);
     });
 
     var finished = delivered || /^(returned_to_sender|canceled)$/.test(current);
-    var live = $("liveDot");
-    live.classList.toggle("stale", finished);
-    setText("lblLive", finished ? "✓" : x.live);
+    $("liveChip").classList.toggle("stale", finished);
+    setText("lblLive", finished ? x.done : x.live);
     setText("checkedAt", new Date().toLocaleTimeString(lang === "pl" ? "pl-PL" : "en-GB", { hour: "2-digit", minute: "2-digit" }));
-    document.title = s.title + " · " + CFG.brandName;
-
-    show("trackView");
+    document.title = st.title + " · " + CFG.brandName;
     return finished;
   }
 
@@ -239,52 +562,48 @@
     setText("errText", kind === "notfound" ? x.errNotFound : kind === "bad" ? x.errBad : x.errNet);
     show("errorView");
   }
-
   function show(id) {
     ["trackView", "errorView", "makeView"].forEach(function (v) { $(v).hidden = v !== id; });
   }
 
   // ---------- data ----------
   function fetchTracking() {
-    if (number.toLowerCase() === "demo") return Promise.resolve(demoData(demoStep));
+    if (isDemo) return Promise.resolve(demoData(demoStep));
     return fetch(API + "/tracking/" + encodeURIComponent(number), { cache: "no-store" }).then(function (r) {
       if (r.status === 404) { var e = new Error("notfound"); e.kind = "notfound"; throw e; }
       if (!r.ok) throw new Error("net");
       return r.json();
     });
   }
-
   function refresh() {
     clearTimeout(timer);
     fetchTracking()
-      .then(function (data) {
-        var finished = render(data);
-        if (!finished) schedule();
-      })
+      .then(function (data) { if (!render(data)) schedule(); })
       .catch(function (e) {
-        if (lastData && e.kind !== "notfound") render(lastData); // keep showing what we had
+        if (lastData && e.kind !== "notfound") render(lastData);
         else showError(e.kind || "net");
         schedule();
       });
   }
-  function schedule() {
-    timer = setTimeout(refresh, Math.max(15, CFG.refreshSeconds) * 1000);
-  }
+  function schedule() { timer = setTimeout(refresh, Math.max(15, CFG.refreshSeconds) * 1000); }
 
   // ---------- demo ----------
-  var DEMO_FLOW = ["confirmed", "dispatched_by_sender", "adopted_at_source_branch", "sent_from_source_branch",
-    "adopted_at_sorting_center", "sent_from_sorting_center", "adopted_at_target_branch", "out_for_delivery", "ready_to_pickup", "delivered"];
-  var DEMO_STEPS = [0, 1, 4, 7, 8, 9];
-  function demoData(step) {
+  var DEMO_FLOW = ["confirmed", "dispatched_by_sender", "adopted_at_source_branch", "adopted_at_sorting_center",
+    "sent_from_sorting_center", "adopted_at_target_branch", "out_for_delivery", "ready_to_pickup", "delivered"];
+  var DEMO_STEPS = [0, 1, 3, 4, 5, 6, 7, 8];
+  var demoStep = 5;
+  function demoData(step, problem) {
     var upto = DEMO_STEPS[step];
     var now = Date.now();
     var details = DEMO_FLOW.slice(0, upto + 1).map(function (s, i) {
-      return { status: s, datetime: new Date(now - (upto - i) * 3.1 * 3600e3).toISOString() };
+      return { status: s, datetime: new Date(now - (2 + (upto - i) * 3) * 3600e3).toISOString() };
     });
+    var status = DEMO_FLOW[upto];
+    if (problem) { status = "undelivered_wrong_address"; details.push({ status: status, datetime: new Date(now - 600e3).toISOString() }); }
     return {
       tracking_number: "680000000000000000000000",
       service: "inpost_locker_standard",
-      status: DEMO_FLOW[upto],
+      status: status,
       custom_attributes: {
         target_machine_id: "WAW01M",
         target_machine_detail: {
@@ -298,17 +617,17 @@
   }
   function buildDemoBar() {
     var bar = document.createElement("div");
-    bar.className = "card small";
+    bar.className = "card small demo-bar";
     bar.id = "demoBar";
     var label = document.createElement("span");
     label.className = "muted";
     label.textContent = t().demo + " ";
     bar.appendChild(label);
-    ["📦", "🚚", "🏭", "🛵", "🔒", "✅", "⚠️"].forEach(function (e, i) {
+    ["🏭", "🛵", "🔀", "🛵", "📍", "🛵", "📦", "✅", "⚠️"].forEach(function (e, i) {
       var b = document.createElement("button");
-      b.type = "button"; b.textContent = e; b.className = "lang"; b.style.margin = "4px";
+      b.type = "button"; b.textContent = e; b.className = "chip-btn";
       b.onclick = function () {
-        if (i === 6) { var d = demoData(3); d.status = "undelivered_wrong_address"; d.tracking_details.push({ status: d.status, datetime: new Date(Date.now() + 60e3).toISOString() }); render(d); return; }
+        if (i === 8) { render(demoData(5, true)); return; }
         demoStep = i; render(demoData(i));
       };
       bar.appendChild(b);
@@ -344,13 +663,21 @@
     if (!number) return;
     loadStatuses().then(function () { if (lastData) render(lastData); else refresh(); });
   });
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && number && number.toLowerCase() !== "demo") refresh();
+  $("btnFollow").addEventListener("click", function () { setFollow(true); });
+  $("btnFit").addEventListener("click", function () { setFollow(false); });
+  window.addEventListener("resize", function () {
+    if (!mapReady) return;
+    setAngle();
+    camTarget = follow ? followView() : routeView();
   });
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && number && !isDemo) refresh();
+  });
+  setInterval(updateMopedTarget, 5000); // keep creeping closer between InPost updates
 
   applyStaticText();
   if (!number) { setupMaker(); return; }
-  if (number.length < 6 && number.toLowerCase() !== "demo") { showError("bad"); return; }
-  if (number.toLowerCase() === "demo") buildDemoBar();
+  if (number.length < 6 && !isDemo) { showError("bad"); return; }
+  if (isDemo) buildDemoBar();
   loadStatuses().then(refresh);
 })();
