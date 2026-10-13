@@ -76,7 +76,13 @@
       <p id="statusDesc" class="status-desc"></p>
       <dl class="facts">
         <div><dt id="lblNumber">Numer przesyłki</dt><dd id="trkNumber" class="mono"></dd></div>
-        <div id="factUpdated"><dt id="lblUpdated">Ostatnia aktualizacja</dt><dd id="trkUpdated"></dd></div>
+        <div id="factUpdated" class="fact-upd">
+          <div class="fact-upd-text"><dt id="lblUpdated">Ostatnia aktualizacja</dt><dd id="trkUpdated"></dd></div>
+          <button type="button" id="refreshBtn" class="refresh-btn">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="lblRefresh">Odśwież</span>
+          </button>
+        </div>
       </dl>
       <div id="dest" class="dest" hidden>
         <div class="eyebrow" id="lblDest">Miejsce odbioru</div>

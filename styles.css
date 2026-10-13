@@ -38,7 +38,7 @@ main { max-width: 820px; margin: 0 auto; padding: 0 16px 40px; display: grid; gr
 .center { text-align: center; }
 .muted { color: var(--muted); }
 .small { font-size: .875rem; }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .02em; word-break: break-all; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .02em; overflow-wrap: anywhere; }
 .eyebrow { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 800; }
 h1 { font-size: 1.45rem; line-height: 1.25; margin: 2px 0 0; letter-spacing: -.01em; }
 h2 { font-size: 1.1rem; margin: 0 0 12px; }
@@ -134,6 +134,18 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .facts div { background: var(--card-2); border-radius: 12px; padding: 10px 14px; }
 .facts dt { font-size: .75rem; color: var(--muted); font-weight: 600; }
 .facts dd { margin: 2px 0 0; font-weight: 700; }
+.facts .fact-upd { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.facts .fact-upd-text { background: none; padding: 0; min-width: 0; }
+.refresh-btn {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  padding: 8px 14px; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); font: inherit; font-size: .85rem; font-weight: 800;
+}
+.refresh-btn:disabled { cursor: default; opacity: .85; }
+.refresh-btn.spinning svg { animation: spin .8s linear infinite; }
+.refresh-btn.ok { background: var(--ok); }
+.refresh-btn.err { background: var(--warn); color: #fff; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .dest { margin-top: 16px; padding: 14px; border-radius: 12px; background: var(--card-2); border-left: 4px solid var(--accent); }
 .dest-name { font-weight: 800; font-size: 1.05rem; margin-top: 2px; }
 .btn-link { display: inline-block; margin-top: 8px; color: var(--accent); font-weight: 700; text-decoration: none; }

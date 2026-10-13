@@ -11,6 +11,7 @@
       status: "Status InPost", live: "NA ŻYWO", done: "ZAKOŃCZONO", number: "Numer przesyłki", updated: "Ostatnia aktualizacja",
       dest: "Miejsce odbioru", history: "Historia przesyłki", source: "Dane na żywo z InPost", checked: "sprawdzono",
       approx: "Pozycja kuriera na mapie jest orientacyjna — przesuwa się z każdą aktualizacją InPost.",
+      refresh: "Odśwież", refreshing: "Sprawdzam…", refreshed: "Aktualne ✓", refreshFail: "Brak połączenia",
       map: "Mapa ↗", hours: "Godziny otwarcia: ", follow: "Śledź", fit: "Trasa", tag: "Twoja paczka",
       pins: ["Magazyn — wysyłka", "Sortownia InPost", "Oddział lokalny"],
       destPin: { locker: "Twój Paczkomat", home: "Twój dom" },
@@ -32,6 +33,7 @@
       status: "InPost status", live: "LIVE", done: "COMPLETE", number: "Tracking number", updated: "Last update",
       dest: "Pickup point", history: "Parcel history", source: "Live data from InPost", checked: "checked",
       approx: "The courier's position on the map is approximate — it moves with every InPost update.",
+      refresh: "Refresh", refreshing: "Checking…", refreshed: "Up to date ✓", refreshFail: "No connection",
       map: "Map ↗", hours: "Opening hours: ", follow: "Follow", fit: "Route", tag: "Your parcel",
       pins: ["Warehouse — dispatch", "InPost sorting hub", "Local depot"],
       destPin: { locker: "Your Paczkomat", home: "Your home" },
@@ -414,7 +416,7 @@
     setText("brandName", CFG.brandName);
     setText("lblStatus", x.status); setText("lblNumber", x.number); setText("lblUpdated", x.updated);
     setText("lblDest", x.dest); setText("lblHistory", x.history); setText("lblSource", x.source); setText("lblChecked", x.checked);
-    setText("lblApprox", x.approx); setText("lblFollow", x.follow); setText("lblFit", x.fit);
+    setText("lblApprox", x.approx); setText("lblRefresh", x.refresh); setText("lblFollow", x.follow); setText("lblFit", x.fit);
     setText("destMap", x.map);
     setText("mkTitle", x.mkTitle); setText("mkText", x.mkText); setText("mkBtn", x.mkBtn); setText("mkCopy", x.mkCopy);
     setText("mkOpen", x.mkOpen); setText("mkDemo", x.mkDemo); $("mkInput").placeholder = x.mkPh;
@@ -563,16 +565,37 @@
       return r.json();
     });
   }
+  // Resolves true when fresh data came back from InPost, false otherwise.
   function refresh() {
     clearTimeout(timer);
-    fetchTracking()
-      .then(function (data) { if (!render(data)) schedule(); })
+    return fetchTracking()
+      .then(function (data) { if (!render(data)) schedule(); return true; })
       .catch(function (e) {
         if (lastData && e.kind !== "notfound") render(lastData);
         else showError(e.kind || "net");
         schedule();
+        return false;
       });
   }
+
+  // "Refresh" button next to the last-update time: ask InPost right now.
+  $("refreshBtn").addEventListener("click", function () {
+    var btn = this;
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.className = "refresh-btn spinning";
+    setText("lblRefresh", t().refreshing);
+    var minSpin = new Promise(function (r) { setTimeout(r, 700); });
+    Promise.all([refresh(), minSpin]).then(function (res) {
+      btn.className = "refresh-btn " + (res[0] ? "ok" : "err");
+      setText("lblRefresh", res[0] ? t().refreshed : t().refreshFail);
+      setTimeout(function () {
+        btn.className = "refresh-btn";
+        btn.disabled = false;
+        setText("lblRefresh", t().refresh);
+      }, 2000);
+    });
+  });
   function schedule() { timer = setTimeout(refresh, Math.max(15, CFG.refreshSeconds) * 1000); }
 
   // ---------- demo ----------
