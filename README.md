@@ -36,6 +36,14 @@ InPost doesn't publish the courier's GPS position, so the map position is an est
 
 The city is generated in the browser (no map service or API key needed). Each tracking number gets its own city layout. On phones the map rotates so the route runs top-to-bottom. **Śledź / Follow** zooms in on the moped, and **Trasa / Route** shows the whole route.
 
+The map can be moved and zoomed within the city's limits:
+
+- **Computer:** drag to move, scroll wheel or double-click to zoom.
+- **Phone:** two fingers to move and pinch-zoom. One finger still scrolls the page, and a short tip explains this.
+- **Both:** the + / − buttons zoom in and out.
+
+The map only redraws while something is moving, so an idle page uses almost no battery.
+
 ## Branding
 
 Edit `config.js` to change the shop name used in the page title, the refresh interval and the default language.

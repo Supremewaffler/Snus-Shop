@@ -11,6 +11,7 @@
       status: "Status InPost", live: "NA ŻYWO", done: "ZAKOŃCZONO", number: "Numer przesyłki", updated: "Ostatnia aktualizacja",
       dest: "Miejsce odbioru", history: "Historia przesyłki", source: "Dane na żywo z InPost", checked: "sprawdzono",
       approx: "Pozycja kuriera na mapie jest orientacyjna — przesuwa się z każdą aktualizacją InPost.",
+      hint: "Użyj dwóch palców, aby przesuwać mapę", zoomIn: "Przybliż", zoomOut: "Oddal",
       refresh: "Odśwież", refreshing: "Sprawdzam…", refreshed: "Aktualne ✓", refreshFail: "Brak połączenia",
       map: "Mapa ↗", hours: "Godziny otwarcia: ", follow: "Śledź", fit: "Trasa", tag: "Twoja paczka",
       pins: ["Magazyn — wysyłka", "Sortownia InPost", "Oddział lokalny"],
@@ -33,6 +34,7 @@
       status: "InPost status", live: "LIVE", done: "COMPLETE", number: "Tracking number", updated: "Last update",
       dest: "Pickup point", history: "Parcel history", source: "Live data from InPost", checked: "checked",
       approx: "The courier's position on the map is approximate — it moves with every InPost update.",
+      hint: "Use two fingers to move the map", zoomIn: "Zoom in", zoomOut: "Zoom out",
       refresh: "Refresh", refreshing: "Checking…", refreshed: "Up to date ✓", refreshFail: "No connection",
       map: "Map ↗", hours: "Opening hours: ", follow: "Follow", fit: "Route", tag: "Your parcel",
       pins: ["Warehouse — dispatch", "InPost sorting hub", "Local depot"],
@@ -136,6 +138,8 @@
   function riverX(y) { return 820 + 55 * Math.sin(y / 190); }
   function coastX(y) { return -180 + 40 * Math.sin(y / 150); }
   function southY(x) { return 1560 + 40 * Math.sin(x / 170); }
+  function eastX(y) { return 1660 + 45 * Math.sin(y / 160); }
+  function northY(x) { return -520 + 35 * Math.sin(x / 140); }
   function rot(p) {
     var a = ANGLE * Math.PI / 180, dx = p[0] - CX, dy = p[1] - CY;
     return [CX + dx * Math.cos(a) - dy * Math.sin(a), CY + dx * Math.sin(a) + dy * Math.cos(a)];
@@ -194,7 +198,7 @@
         var x = i * GRID, y = j * GRID, cxm = x + GRID / 2;
         if (inPark(i, j)) continue;
         if (Math.abs(cxm - riverX(y + GRID / 2)) < 62 + GRID / 2) continue;
-        if (x < coastX(y) || y + GRID > southY(cxm)) continue;
+        if (x < coastX(y) || y + GRID > southY(cxm) || x + GRID > eastX(y + GRID / 2) || y < northY(cxm)) continue;
         var bx = x + gap / 2, by = y + gap / 2, s = GRID - gap, r = rnd();
         var c = function () { return cls[Math.floor(rnd() * 4)]; };
         if (r < 0.35) out.push('<rect class="' + c() + '" x="' + bx + '" y="' + by + '" width="' + s + '" height="' + s + '"/>');
@@ -221,7 +225,13 @@
     var south = ["-900,3000"];
     for (var xx = -900; xx <= 2300; xx += 20) south.push(xx + "," + southY(xx));
     south.push("2300,3000");
-    [river, west.join(" "), south.join(" ")].forEach(function (pts) {
+    var east = ["3000,-900"];
+    for (yy = -900; yy <= 2300; yy += 20) east.push(eastX(yy) + "," + yy);
+    east.push("3000,2300");
+    var north = ["-900,-3000"];
+    for (xx = -900; xx <= 2300; xx += 20) north.push(xx + "," + northY(xx));
+    north.push("2300,-3000");
+    [river, west.join(" "), south.join(" "), east.join(" "), north.join(" ")].forEach(function (pts) {
       out.push('<polygon class="water" points="' + pts + '"/><polygon class="water-edge" points="' + pts + '"/>');
     });
     // bridges (the route crosses on the y=660 one)
@@ -249,7 +259,7 @@
     var placed = 0, tries = 0, pois = [];
     while (placed < 18 && tries++ < 400) {
       var px = -300 + rnd() * 1900, py = -300 + rnd() * 1800;
-      if (Math.abs(px - riverX(py)) < 90 || px < coastX(py) + 40 || py > southY(px) - 40) continue;
+      if (Math.abs(px - riverX(py)) < 90 || px < coastX(py) + 40 || py > southY(px) - 40 || px > eastX(py) - 40 || py < northY(px) + 40) continue;
       var near = false;
       for (var q = 0; q <= 40; q++) { var rp = pointAt(TOTAL * q / 40); if (Math.hypot(rp[0] - px, rp[1] - py) < 110) { near = true; break; } }
       for (q = 0; q < pois.length && !near; q++) if (Math.hypot(pois[q][0] - px, pois[q][1] - py) < 140) near = true;
@@ -347,37 +357,148 @@
     var p = rot(pointAt(shown.d));
     return fitBox(p[0] - 260, p[1] - 200, p[0] + 260, p[1] + 200);
   }
-  function setFollow(on) {
-    follow = on;
-    $("btnFollow").classList.toggle("on", on);
-    $("btnFit").classList.toggle("on", !on);
-    camTarget = on ? followView() : routeView();
+  // Camera modes: "follow" the moped, show the whole "route", or "free" after the user moves the map.
+  var mode = "route";
+  function setMode(m) {
+    mode = m;
+    follow = m === "follow";
+    $("btnFollow").classList.toggle("on", m === "follow");
+    $("btnFit").classList.toggle("on", m === "route");
+    camTarget = m === "follow" ? followView() : m === "route" ? routeView() : camTarget;
+  }
+  function setFollow(on) { setMode(on ? "follow" : "route"); }
+
+  // Keep the camera over the city and within sensible zoom levels.
+  function mapSize() { var w = $("mapWrap"); return [w.clientWidth || 1, w.clientHeight || 1]; }
+  function clampBox(b) {
+    var sz = mapSize(), rv = routeView();
+    var minW = sz[0] * 0.3, maxW = rv.w * 1.4;
+    var w = Math.max(minW, Math.min(maxW, b.w)), h = w * sz[1] / sz[0];
+    var cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    var rcx = rv.x + rv.w / 2, rcy = rv.y + rv.h / 2, slackX = rv.w * 0.45, slackY = rv.h * 0.45;
+    cx = Math.max(rcx - slackX, Math.min(rcx + slackX, cx));
+    cy = Math.max(rcy - slackY, Math.min(rcy + slackY, cy));
+    return { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
+  }
+  // Zoom by factor f (>1 = closer) keeping screen point (px, py) fixed.
+  function zoomBox(b, f, px, py) {
+    var sz = mapSize(), unit = b.w / sz[0];
+    var wx = b.x + px * unit, wy = b.y + py * unit;
+    var w = b.w / f, u2 = w / sz[0];
+    return { x: wx - px * u2, y: wy - py * u2, w: w, h: w * sz[1] / sz[0] };
+  }
+  function moveCam(box) {           // immediate, for drags and pinches
+    setMode("free");
+    cam = clampBox(box);
+    camTarget = null;
+  }
+  function zoomButton(f) {          // animated, for the +/- buttons
+    var base = camTarget || cam, sz = mapSize();
+    setMode("free");
+    camTarget = clampBox(zoomBox(base, f, sz[0] / 2, sz[1] / 2));
   }
 
-  var rafOn = false;
+  var rafOn = false, last = {};
   function tick() {
     // ease moped along the route
     shown.d += (want.d - shown.d) * 0.06;
     shown.ox += (want.ox - shown.ox) * 0.08;
     if (Math.abs(want.d - shown.d) < 0.3) shown.d = want.d;
+    if (Math.abs(want.ox - shown.ox) < 0.1) shown.ox = want.ox;
     if (follow) camTarget = followView();
     if (camTarget) {
-      ["x", "y", "w", "h"].forEach(function (k) { cam[k] += (camTarget[k] - cam[k]) * 0.08; });
+      var done = true;
+      ["x", "y", "w", "h"].forEach(function (k) {
+        cam[k] += (camTarget[k] - cam[k]) * 0.08;
+        if (Math.abs(camTarget[k] - cam[k]) > 0.05) done = false;
+      });
+      if (done && !follow) { cam = camTarget; camTarget = null; }
     }
-    $("map").setAttribute("viewBox", cam.x + " " + cam.y + " " + cam.w + " " + cam.h);
-    var unit = cam.w / ($("mapWrap").clientWidth || 1);
-    // The rider always faces right so the logo on the box stays readable.
-    var raw = pointAt(shown.d);
-    var m = $("moped");
-    m.setAttribute("data-x", raw[0]);
-    m.setAttribute("data-y", raw[1]);
-    document.querySelectorAll("#map .marker").forEach(function (g) {
-      var p = rot([+g.getAttribute("data-x"), +g.getAttribute("data-y")]);
-      if (g === m) p[0] += shown.ox * unit;
-      g.setAttribute("transform", "translate(" + p[0] + " " + p[1] + ") scale(" + unit + ")");
-    });
-    $("routeDone").setAttribute("stroke-dasharray", shown.d + " " + (TOTAL + 50));
+    // Only touch the DOM when something actually moved, so an idle map costs nothing.
+    var W = $("mapWrap").clientWidth || 1;
+    if (cam.x !== last.x || cam.y !== last.y || cam.w !== last.w || cam.h !== last.h ||
+        shown.d !== last.d || shown.ox !== last.ox || W !== last.W || ANGLE !== last.A || last.dirty) {
+      last = { x: cam.x, y: cam.y, w: cam.w, h: cam.h, d: shown.d, ox: shown.ox, W: W, A: ANGLE };
+      $("map").setAttribute("viewBox", cam.x + " " + cam.y + " " + cam.w + " " + cam.h);
+      var unit = cam.w / W;
+      // The rider always faces right so the logo on the box stays readable.
+      var raw = pointAt(shown.d);
+      var m = $("moped");
+      m.setAttribute("data-x", raw[0]);
+      m.setAttribute("data-y", raw[1]);
+      document.querySelectorAll("#map .marker").forEach(function (g) {
+        var p = rot([+g.getAttribute("data-x"), +g.getAttribute("data-y")]);
+        if (g === m) p[0] += shown.ox * unit;
+        g.setAttribute("transform", "translate(" + p[0] + " " + p[1] + ") scale(" + unit + ")");
+      });
+      $("routeDone").setAttribute("stroke-dasharray", shown.d + " " + (TOTAL + 50));
+    }
     requestAnimationFrame(tick);
+  }
+  function redraw() { last.dirty = true; }
+
+  // ---------- map gestures ----------
+  // Mouse: drag to pan, wheel to zoom, double-click to zoom in.
+  // Touch: two fingers pan and pinch-zoom; one finger keeps scrolling the page (with a hint).
+  function setupGestures() {
+    var wrap = $("mapWrap"), svg = $("map");
+    function local(e) { var r = wrap.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+    var drag = null;
+    svg.addEventListener("mousedown", function (e) {
+      if (e.button !== 0) return;
+      drag = { p: local(e), box: Object.assign({}, cam) };
+      wrap.classList.add("dragging");
+      e.preventDefault();
+    });
+    window.addEventListener("mousemove", function (e) {
+      if (!drag) return;
+      var p = local(e), unit = drag.box.w / mapSize()[0];
+      moveCam({ x: drag.box.x - (p[0] - drag.p[0]) * unit, y: drag.box.y - (p[1] - drag.p[1]) * unit, w: drag.box.w, h: drag.box.h });
+    });
+    window.addEventListener("mouseup", function () { drag = null; wrap.classList.remove("dragging"); });
+    svg.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      var p = local(e);
+      moveCam(zoomBox(cam, Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0015)), p[0], p[1]));
+    }, { passive: false });
+    svg.addEventListener("dblclick", function (e) {
+      var p = local(e);
+      setMode("free");
+      camTarget = clampBox(zoomBox(cam, 1.8, p[0], p[1]));
+    });
+
+    var pinch = null, hintTimer = null, oneStart = null;
+    function mid(t) { var r = wrap.getBoundingClientRect(); return [(t[0].clientX + t[1].clientX) / 2 - r.left, (t[0].clientY + t[1].clientY) / 2 - r.top]; }
+    function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+    svg.addEventListener("touchstart", function (e) {
+      if (e.touches.length === 2) {
+        pinch = { m: mid(e.touches), d: dist(e.touches), box: Object.assign({}, cam) };
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        oneStart = [e.touches[0].clientX, e.touches[0].clientY];
+      }
+    }, { passive: false });
+    svg.addEventListener("touchmove", function (e) {
+      if (e.touches.length === 2 && pinch) {
+        e.preventDefault();
+        var m = mid(e.touches), f = dist(e.touches) / pinch.d, b = pinch.box;
+        var z = zoomBox(b, f, pinch.m[0], pinch.m[1]);           // zoom around where the pinch started
+        var unit = z.w / mapSize()[0];
+        moveCam({ x: z.x - (m[0] - pinch.m[0]) * unit, y: z.y - (m[1] - pinch.m[1]) * unit, w: z.w, h: z.h });
+      } else if (e.touches.length === 1 && oneStart && !pinch) {
+        var dx = e.touches[0].clientX - oneStart[0], dy = e.touches[0].clientY - oneStart[1];
+        if (Math.hypot(dx, dy) > 12) {
+          wrap.classList.add("show-hint");
+          clearTimeout(hintTimer);
+          hintTimer = setTimeout(function () { wrap.classList.remove("show-hint"); }, 1600);
+          oneStart = null;
+        }
+      }
+    }, { passive: false });
+    svg.addEventListener("touchend", function (e) { if (e.touches.length < 2) pinch = null; });
+
+    $("btnZoomIn").addEventListener("click", function () { zoomButton(1.6); });
+    $("btnZoomOut").addEventListener("click", function () { zoomButton(1 / 1.6); });
   }
 
   var mapReady = false;
@@ -396,11 +517,13 @@
     }
     buildPins(dest);
     buildMoped();
+    redraw();
     if (!rafOn) {
       rafOn = true;
       var rv = routeView();
       cam = { x: rv.x - rv.w * 0.15, y: rv.y - rv.h * 0.15, w: rv.w * 1.3, h: rv.h * 1.3 };
       setFollow(false);
+      setupGestures();
       requestAnimationFrame(tick);
     }
   }
@@ -416,7 +539,8 @@
     setText("brandName", CFG.brandName);
     setText("lblStatus", x.status); setText("lblNumber", x.number); setText("lblUpdated", x.updated);
     setText("lblDest", x.dest); setText("lblHistory", x.history); setText("lblSource", x.source); setText("lblChecked", x.checked);
-    setText("lblApprox", x.approx); setText("lblRefresh", x.refresh); setText("lblFollow", x.follow); setText("lblFit", x.fit);
+    setText("lblApprox", x.approx); setText("lblRefresh", x.refresh); setText("lblHint", x.hint);
+    $("btnZoomIn").setAttribute("aria-label", x.zoomIn); $("btnZoomOut").setAttribute("aria-label", x.zoomOut); setText("lblFollow", x.follow); setText("lblFit", x.fit);
     setText("destMap", x.map);
     setText("mkTitle", x.mkTitle); setText("mkText", x.mkText); setText("mkBtn", x.mkBtn); setText("mkCopy", x.mkCopy);
     setText("mkOpen", x.mkOpen); setText("mkDemo", x.mkDemo); $("mkInput").placeholder = x.mkPh;
@@ -679,7 +803,8 @@
   window.addEventListener("resize", function () {
     if (!mapReady) return;
     setAngle();
-    camTarget = follow ? followView() : routeView();
+    if (mode === "free") cam = clampBox(cam); else camTarget = follow ? followView() : routeView();
+    redraw();
   });
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden && number && !isDemo) refresh();
