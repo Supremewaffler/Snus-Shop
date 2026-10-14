@@ -44,6 +44,18 @@ The map can be moved and zoomed within the city's limits:
 
 The map only redraws while something is moving, so an idle page uses almost no battery.
 
+## Map styles
+
+`mapStyle` in `config.js` picks the map's look:
+
+- `neon`: purple game map (default)
+- `noir`: black and silver, matching the brand
+- `night`: dark city with lit windows and a gold route
+- `day`: light, Google-Maps-like
+- `blueprint`: blue and white
+
+To preview any style without changing the site, add `&map=<style>` to a link, e.g. `?p=demo&map=noir`.
+
 ## Flavour carousel
 
 Under the pickup point, customers see a **Popularne smaki / Popular flavours** carousel. They can swipe it, or use the arrows or dots.

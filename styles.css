@@ -45,7 +45,39 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 
 /* ---------- Map ---------- */
 .map-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-.map-wrap { position: relative; height: min(68vh, 560px); min-height: 380px; background: #0a0c2a; }
+/* Map styles: pick with mapStyle in config.js (or ?map=… to preview). "neon" is the default. */
+.map-wrap {
+  --sea: #0a0c2a; --land: #241f63; --edge: #3b37a0; --edge-o: .55;
+  --b1: #6f63e0; --b2: #7d72ea; --b3: #6257cf; --b4: #8a80f0;
+  --park: #2f3488; --tree: #3c46a8; --ave: #9d94ff; --ave-o: .35; --bridge: #4a43b3; --rail: #a69cff;
+  --r-done: #ffffff; --r-todo: #e9e6df; --r-glow: #ffffff; --r-glow-o: .16;
+}
+.map-wrap[data-map="noir"] {
+  --sea: #050506; --land: #111114; --edge: #4a4a52; --edge-o: .7;
+  --b1: #2a2a31; --b2: #313139; --b3: #24242a; --b4: #3a3a43;
+  --park: #16181a; --tree: #22262a; --ave: #b9b5ac; --ave-o: .22; --bridge: #2c2c33; --rail: #c9c5bc;
+  --r-done: #f2f0ea; --r-todo: #9d9a92; --r-glow: #ffffff; --r-glow-o: .14;
+}
+.map-wrap[data-map="night"] {
+  --sea: #030c18; --land: #0a1424; --edge: #1f4a7a; --edge-o: .7;
+  --b1: #18263d; --b2: #1d2e49; --b3: #142135; --b4: #f0a53a;
+  --park: #0b2620; --tree: #12392f; --ave: #ffc857; --ave-o: .22; --bridge: #1b2c47; --rail: #ffc857;
+  --r-done: #ffc857; --r-todo: #ffdf9a; --r-glow: #ffb400; --r-glow-o: .22;
+}
+.map-wrap[data-map="night"] .b4 { opacity: .55; }
+.map-wrap[data-map="day"] {
+  --sea: #8fd3ff; --land: #efe9dc; --edge: #ffffff; --edge-o: .9;
+  --b1: #ffffff; --b2: #f8f5ef; --b3: #e9e3d6; --b4: #dfd8c9;
+  --park: #b5e2a2; --tree: #8ccf77; --ave: #ffcf5c; --ave-o: 1; --bridge: #ffcf5c; --rail: #e3ad35;
+  --r-done: #1a73e8; --r-todo: #1a73e8; --r-glow: #1a73e8; --r-glow-o: .18;
+}
+.map-wrap[data-map="blueprint"] {
+  --sea: #0a2c52; --land: #0f3f73; --edge: #cfe8ff; --edge-o: .5;
+  --b1: #16599a; --b2: #1a63a8; --b3: #134f8a; --b4: #1f6db8;
+  --park: #0f4a6e; --tree: #17618c; --ave: #e6f3ff; --ave-o: .45; --bridge: #1a5c99; --rail: #e6f3ff;
+  --r-done: #ffffff; --r-todo: #bfe0ff; --r-glow: #ffffff; --r-glow-o: .18;
+}
+.map-wrap { position: relative; height: min(68vh, 560px); min-height: 380px; background: var(--sea); }
 #map { display: block; width: 100%; height: 100%; cursor: grab; user-select: none; -webkit-user-select: none; }
 .map-wrap.dragging #map { cursor: grabbing; }
 #city rect { shape-rendering: crispEdges; }
@@ -57,20 +89,20 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 }
 .map-hint span { background: rgba(14,14,18,.92); border: 1px solid rgba(255,255,255,.16); padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: .9rem; }
 .map-wrap.show-hint .map-hint { opacity: 1; }
-#sea { fill: #0a0c2a; }
-.land { fill: #241f63; }
-.water { fill: #0a0c2a; }
-.water-edge { fill: none; stroke: #3b37a0; stroke-width: 3; opacity: .55; }
-.b1 { fill: #6f63e0; } .b2 { fill: #7d72ea; } .b3 { fill: #6257cf; } .b4 { fill: #8a80f0; }
-.park { fill: #2f3488; }
-.tree { fill: #3c46a8; }
-.avenue { stroke: #9d94ff; stroke-width: 5; opacity: .35; fill: none; }
-.bridge { fill: #4a43b3; }
-.bridge-rail { stroke: #a69cff; stroke-width: 2; opacity: .7; }
+#sea { fill: var(--sea); }
+.land { fill: var(--land); }
+.water { fill: var(--sea); }
+.water-edge { fill: none; stroke: var(--edge); stroke-width: 3; opacity: var(--edge-o); }
+.b1 { fill: var(--b1); } .b2 { fill: var(--b2); } .b3 { fill: var(--b3); } .b4 { fill: var(--b4); }
+.park { fill: var(--park); }
+.tree { fill: var(--tree); }
+.avenue { stroke: var(--ave); stroke-width: 5; opacity: var(--ave-o); fill: none; }
+.bridge { fill: var(--bridge); }
+.bridge-rail { stroke: var(--rail); stroke-width: 2; opacity: .7; }
 
-.route-glow { fill: none; stroke: #ffffff; stroke-width: 16; opacity: .16; stroke-linecap: round; stroke-linejoin: round; }
-.route-todo { fill: none; stroke: #e9e6df; stroke-width: 5; stroke-dasharray: 2 12; stroke-linecap: round; stroke-linejoin: round; animation: march 1s linear infinite; }
-.route-done { fill: none; stroke: #ffffff; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: url(#glow); }
+.route-glow { fill: none; stroke: var(--r-glow); stroke-width: 16; opacity: var(--r-glow-o); stroke-linecap: round; stroke-linejoin: round; }
+.route-todo { fill: none; stroke: var(--r-todo); stroke-width: 5; stroke-dasharray: 2 12; stroke-linecap: round; stroke-linejoin: round; animation: march 1s linear infinite; }
+.route-done { fill: none; stroke: var(--r-done); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: url(#glow); }
 @keyframes march { to { stroke-dashoffset: -14; } }
 
 .pin .pin-body { filter: url(#pinShadow); }

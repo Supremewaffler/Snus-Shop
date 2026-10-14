@@ -83,6 +83,7 @@
     return CFG.defaultLang === "en" ? "en" : "pl";
   })();
   var params = new URLSearchParams(location.search);
+  var MAP_STYLES = ["neon", "noir", "night", "day", "blueprint"];
   var number = (params.get("p") || params.get("n") || "").replace(/[^0-9A-Za-z]/g, "");
   var isDemo = number.toLowerCase() === "demo";
   var statusDict = {};
@@ -978,6 +979,9 @@
     if (!document.hidden && number && !isDemo) refresh();
   });
   setInterval(updateMopedTarget, 5000); // keep creeping closer between InPost updates
+
+  var mapStyle = (params.get("map") || CFG.mapStyle || "neon").toLowerCase();
+  $("mapWrap").dataset.map = MAP_STYLES.indexOf(mapStyle) >= 0 ? mapStyle : "neon";
 
   applyStaticText();
   if (!number) { setupMaker(); return; }
