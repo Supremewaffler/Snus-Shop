@@ -662,7 +662,10 @@
   }
 
   // ---------- data ----------
+  // The first tracking request starts right away, alongside the status wording, instead of after it.
+  var prefetched = null;
   function fetchTracking() {
+    if (prefetched) { var p = prefetched; prefetched = null; return p; }
     if (isDemo) return Promise.resolve(demoData(demoStep));
     return fetch(API + "/tracking/" + encodeURIComponent(number), { cache: "no-store" }).then(function (r) {
       if (r.status === 404) { var e = new Error("notfound"); e.kind = "notfound"; throw e; }
@@ -910,6 +913,7 @@
   // ---------- link maker ----------
   function setupMaker() {
     show("makeView");
+    Array.prototype.forEach.call(document.querySelectorAll("#makeView img[data-src]"), function (img) { img.src = img.getAttribute("data-src"); });
     $("mkForm").addEventListener("submit", function (ev) {
       ev.preventDefault();
       var n = $("mkInput").value.replace(/[^0-9A-Za-z]/g, "");
@@ -961,5 +965,6 @@
   if (number.length < 6 && !isDemo) { showError("bad"); return; }
   if (isDemo) buildDemoBar();
   setupShop();
+  if (!isDemo) { prefetched = fetchTracking(); prefetched.catch(function () {}); }
   loadStatuses().then(refresh);
 })();

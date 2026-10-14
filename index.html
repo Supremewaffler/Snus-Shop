@@ -9,12 +9,13 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://api-shipx-pl.easypack24.net" crossorigin>
 <link rel="preload" as="image" href="assets/rider.webp">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><img src="assets/wordmark.png" alt="Snus Shop 24" id="brandLogo" width="146" height="45"><span id="brandName" class="sr-only">Snus Shop 24</span></div>
+  <div class="brand"><img src="assets/wordmark.webp" alt="Snus Shop 24" id="brandLogo" width="146" height="45"><span id="brandName" class="sr-only">Snus Shop 24</span></div>
   <button id="langBtn" class="chip-btn" type="button">EN</button>
 </header>
 
@@ -131,7 +132,7 @@
 
   <!-- Error / not found -->
   <section id="errorView" class="card center" hidden>
-    <img class="err-rider" src="assets/rider.webp" alt="" width="180" height="173">
+    <img class="err-rider" src="assets/rider.webp" loading="lazy" alt="" width="180" height="173">
     <h1 id="errTitle">Jeszcze nie ruszyliśmy</h1>
     <p id="errText" class="muted"></p>
   </section>
@@ -139,8 +140,9 @@
   <!-- Link maker (no ?p= in the URL) -->
   <section id="makeView" class="card maker" hidden>
     <div class="maker-hero">
-      <img src="assets/logo.png" alt="Snus Shop 24" class="maker-logo" width="120" height="120">
-      <img src="assets/rider-large.webp" alt="" class="maker-rider" width="220" height="211">
+      <!-- loaded only when this page is shown (customers never see it) -->
+      <img data-src="assets/logo.webp" alt="Snus Shop 24" class="maker-logo" width="120" height="120">
+      <img data-src="assets/rider-large.webp" alt="" class="maker-rider" width="220" height="211">
     </div>
     <h1 id="mkTitle">Utwórz link śledzenia</h1>
     <p id="mkText" class="muted">Wklej numer przesyłki InPost. Otrzymasz link, który możesz wysłać klientowi.</p>

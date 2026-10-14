@@ -88,13 +88,13 @@ Edit `config.js` to change the shop name used in the page title, the refresh int
 
 The Snus Shop 24 artwork lives in `assets/`:
 
-- `wordmark.png`: the header logo
-- `logo.png`: the round logo on the link-maker page
+- `wordmark.webp`: the header logo
+- `logo.webp`: the round logo on the link-maker page
 - `favicon.png` and `apple-touch-icon.png`: browser and home-screen icons
 - `rider.webp`: the courier on the map
 - `rider-large.webp`: the bigger rider on the link-maker page
 
-To update the artwork, replace these files with new versions of the same name and size.
+To update the artwork, replace these files with new versions of the same size. Phones keep files from `assets/` for up to a week (see `vercel.json`), so give a changed image a new file name (e.g. `rider-2.webp`) and update the reference to it. Otherwise returning customers may keep seeing the old one.
 
 ## Hosting
 
