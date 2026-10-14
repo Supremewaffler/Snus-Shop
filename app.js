@@ -131,10 +131,13 @@
   // =====================================================================
   //  MAP
   // =====================================================================
-  var GRID = 44, AVE = 132, ANGLE = -12, CX = 700, CY = 700; // ANGLE is set per screen shape in initMap
-  // Route along the avenues: warehouse -> sorting hub -> (bridge) -> depot -> customer
-  var ROUTE = [[264, 396], [528, 396], [528, 660], [1056, 660], [1188, 660], [1188, 1056]];
-  var STOP_VERTEX = [0, 2, 3, 5];
+  // The city drawing and the route come from layouts.js; pick one with mapLayout in config.js or ?layout=.
+  var LAYOUTS = window.MapLayouts || {};
+  var LAYOUT_NAME = (params.get("layout") || CFG.mapLayout || "grid").toLowerCase();
+  if (!LAYOUTS[LAYOUT_NAME]) LAYOUT_NAME = "grid";
+  var LAYOUT = LAYOUTS[LAYOUT_NAME];
+  var CX = 700, CY = 700, ANGLE = LAYOUT.angles[0]; // ANGLE is picked per screen shape in setAngle
+  var ROUTE = LAYOUT.route, STOP_VERTEX = LAYOUT.stops;
   var routeLen = [0];
   for (var i = 1; i < ROUTE.length; i++) {
     routeLen.push(routeLen[i - 1] + Math.hypot(ROUTE[i][0] - ROUTE[i - 1][0], ROUTE[i][1] - ROUTE[i - 1][1]));
@@ -142,11 +145,6 @@
   var TOTAL = routeLen[routeLen.length - 1];
   var STOP_DIST = STOP_VERTEX.map(function (v) { return routeLen[v]; });
 
-  function riverX(y) { return 820 + 55 * Math.sin(y / 190); }
-  function coastX(y) { return -180 + 40 * Math.sin(y / 150); }
-  function southY(x) { return 1560 + 40 * Math.sin(x / 170); }
-  function eastX(y) { return 1660 + 45 * Math.sin(y / 160); }
-  function northY(x) { return -520 + 35 * Math.sin(x / 140); }
   function rot(p) {
     var a = ANGLE * Math.PI / 180, dx = p[0] - CX, dy = p[1] - CY;
     return [CX + dx * Math.cos(a) - dy * Math.sin(a), CY + dx * Math.sin(a) + dy * Math.cos(a)];
@@ -174,85 +172,10 @@
 
   function buildCity(seed) {
     var rnd = seeded(seed);
-    var out = [];
-    out.push("<g>");
-    out.push('<rect class="land" x="-800" y="-800" width="3000" height="3000"/>');
-    // avenues (show through the gaps between blocks)
-    for (var a = -6; a <= 16; a++) {
-      out.push('<line class="avenue" x1="' + a * AVE + '" y1="-800" x2="' + a * AVE + '" y2="2200"/>');
-      out.push('<line class="avenue" x1="-800" y1="' + a * AVE + '" x2="2200" y2="' + a * AVE + '"/>');
-    }
-    // parks
-    var parks = [[5, 1, 3, 3]];
-    for (var p = 0; p < 7; p++) parks.push([Math.floor(rnd() * 34) - 6, Math.floor(rnd() * 34) - 6, 1 + Math.floor(rnd() * 3), 1 + Math.floor(rnd() * 3)]);
-    function inPark(i, j) {
-      for (var k = 0; k < parks.length; k++) {
-        var q = parks[k];
-        if (i >= q[0] * 3 && i < (q[0] + q[2]) * 3 && j >= q[1] * 3 && j < (q[1] + q[3]) * 3) return true;
-      }
-      return false;
-    }
-    parks.forEach(function (q) {
-      out.push('<rect class="park" x="' + (q[0] * AVE + 4) + '" y="' + (q[1] * AVE + 4) + '" width="' + (q[2] * AVE - 8) + '" height="' + (q[3] * AVE - 8) + '" rx="6"/>');
-      for (var n = 0; n < q[2] * q[3] * 9; n++) {
-        out.push('<circle class="tree" cx="' + (q[0] * AVE + 12 + rnd() * (q[2] * AVE - 24)).toFixed(0) + '" cy="' + (q[1] * AVE + 12 + rnd() * (q[3] * AVE - 24)).toFixed(0) + '" r="' + (4 + rnd() * 6).toFixed(1) + '"/>');
-      }
-    });
-    // building blocks
-    var gap = 7, cls = ["b1", "b2", "b3", "b4"];
-    for (var i = -14; i < 40; i++) {
-      for (var j = -14; j < 40; j++) {
-        var x = i * GRID, y = j * GRID, cxm = x + GRID / 2;
-        if (inPark(i, j)) continue;
-        if (Math.abs(cxm - riverX(y + GRID / 2)) < 62 + GRID / 2) continue;
-        if (x < coastX(y) || y + GRID > southY(cxm) || x + GRID > eastX(y + GRID / 2) || y < northY(cxm)) continue;
-        var bx = x + gap / 2, by = y + gap / 2, s = GRID - gap, r = rnd();
-        var c = function () { return cls[Math.floor(rnd() * 4)]; };
-        if (r < 0.35) out.push('<rect class="' + c() + '" x="' + bx + '" y="' + by + '" width="' + s + '" height="' + s + '"/>');
-        else if (r < 0.7) {
-          var w = Math.round(s * (0.35 + rnd() * 0.3));
-          out.push('<rect class="' + c() + '" x="' + bx + '" y="' + by + '" width="' + (w - 1) + '" height="' + s + '"/>');
-          out.push('<rect class="' + c() + '" x="' + (bx + w + 1) + '" y="' + by + '" width="' + (s - w - 1) + '" height="' + s + '"/>');
-        } else {
-          var h2 = s / 2;
-          out.push('<rect class="' + c() + '" x="' + bx + '" y="' + by + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
-          out.push('<rect class="' + c() + '" x="' + (bx + h2 + 1) + '" y="' + by + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
-          out.push('<rect class="' + c() + '" x="' + bx + '" y="' + (by + h2 + 1) + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
-          out.push('<rect class="' + c() + '" x="' + (bx + h2 + 1) + '" y="' + (by + h2 + 1) + '" width="' + (h2 - 1) + '" height="' + (h2 - 1) + '"/>');
-        }
-      }
-    }
-    // water: river, west coast, south coast
-    var L = [], R = [];
-    for (var yy = -900; yy <= 2300; yy += 20) { L.push((riverX(yy) - 62) + "," + yy); R.unshift((riverX(yy) + 62) + "," + yy); }
-    var river = L.concat(R).join(" ");
-    var west = ["-3000,-900"];
-    for (yy = -900; yy <= 2300; yy += 20) west.push(coastX(yy) + "," + yy);
-    west.push("-3000,2300");
-    var south = ["-900,3000"];
-    for (var xx = -900; xx <= 2300; xx += 20) south.push(xx + "," + southY(xx));
-    south.push("2300,3000");
-    var east = ["3000,-900"];
-    for (yy = -900; yy <= 2300; yy += 20) east.push(eastX(yy) + "," + yy);
-    east.push("3000,2300");
-    var north = ["-900,-3000"];
-    for (xx = -900; xx <= 2300; xx += 20) north.push(xx + "," + northY(xx));
-    north.push("2300,-3000");
-    [river, west.join(" "), south.join(" "), east.join(" "), north.join(" ")].forEach(function (pts) {
-      out.push('<polygon class="water" points="' + pts + '"/><polygon class="water-edge" points="' + pts + '"/>');
-    });
-    // bridges (the route crosses on the y=660 one)
-    [264, 660, 1188].forEach(function (by) {
-      var rx = riverX(by);
-      out.push('<rect class="bridge" x="' + (rx - 76) + '" y="' + (by - 10) + '" width="152" height="20" rx="3"/>');
-      out.push('<line class="bridge-rail" x1="' + (rx - 76) + '" y1="' + (by - 10) + '" x2="' + (rx + 76) + '" y2="' + (by - 10) + '"/>');
-      out.push('<line class="bridge-rail" x1="' + (rx - 76) + '" y1="' + (by + 10) + '" x2="' + (rx + 76) + '" y2="' + (by + 10) + '"/>');
-    });
-    out.push("</g>");
-    $("city").innerHTML = out.join("");
+    $("city").innerHTML = "<g>" + LAYOUT.build(rnd, { angle: ANGLE }) + "</g>";
 
     // route
-    var d = "M" + ROUTE.map(function (p) { return p.join(" "); }).join(" L");
+    var d = "M" + ROUTE.map(function (p) { return p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" L");
     $("routeLayer").innerHTML =
       '<path class="route-glow" d="' + d + '"/>' +
       '<path class="route-todo" d="' + d + '"/>' +
@@ -264,9 +187,10 @@
     var kinds = ["coffee", "tree", "bag", "star", "gym", "music"];
     var colors = ["#4ee08a", "#5ef2ff", "#b06cff", "#ff8a3d", "#ff4f7a", "#58c8ff"];
     var placed = 0, tries = 0, pois = [];
-    while (placed < 18 && tries++ < 400) {
-      var px = -300 + rnd() * 1900, py = -300 + rnd() * 1800;
-      if (Math.abs(px - riverX(py)) < 90 || px < coastX(py) + 40 || py > southY(px) - 40 || px > eastX(py) - 40 || py < northY(px) + 40) continue;
+    var maxPois = LAYOUT.pois == null ? 18 : LAYOUT.pois;
+    while (placed < maxPois && tries++ < 600) {
+      var pt = LAYOUT.randPoint(rnd), px = pt[0], py = pt[1];
+      if (LAYOUT.isWater(px, py) || LAYOUT.isWater(px + 40, py) || LAYOUT.isWater(px - 40, py) || LAYOUT.isWater(px, py + 40) || LAYOUT.isWater(px, py - 40)) continue;
       var near = false;
       for (var q = 0; q <= 40; q++) { var rp = pointAt(TOTAL * q / 40); if (Math.hypot(rp[0] - px, rp[1] - py) < 110) { near = true; break; } }
       for (q = 0; q < pois.length && !near; q++) if (Math.hypot(pois[q][0] - px, pois[q][1] - py) < 140) near = true;
@@ -509,18 +433,36 @@
   }
 
   var mapReady = false;
+  // Pick the rotation (from the layout's candidates) that shows the route biggest on this screen.
+  function bestAngle() {
+    var sz = mapSize(), aw = Math.max(50, sz[0] - PAD.side * 2), ah = Math.max(50, sz[1] - PAD.top - PAD.bottom);
+    var best = LAYOUT.angles[0], bestScore = Infinity, keep = ANGLE;
+    LAYOUT.angles.forEach(function (cand) {
+      ANGLE = cand;
+      var xs = [], ys = [];
+      ROUTE.forEach(function (p) { var r = rot(p); xs.push(r[0]); ys.push(r[1]); });
+      var k = Math.max((Math.max.apply(0, xs) - Math.min.apply(0, xs) + 40) / aw, (Math.max.apply(0, ys) - Math.min.apply(0, ys) + 100) / ah);
+      var score = k * (1 + Math.abs(cand - LAYOUT.angles[0]) / 300);
+      if (score < bestScore) { bestScore = score; best = cand; }
+    });
+    ANGLE = keep;
+    return best;
+  }
   function setAngle() {
-    var wrap = $("mapWrap");
-    ANGLE = wrap.clientWidth / Math.max(1, wrap.clientHeight) < 0.9 ? 38 : -12; // portrait: run the route top-to-bottom
+    var next = bestAngle(), changed = next !== ANGLE;
+    ANGLE = next;
     var tf = "rotate(" + ANGLE + " " + CX + " " + CY + ")";
     $("city").setAttribute("transform", tf);
     $("routeLayer").setAttribute("transform", tf);
+    if (changed && mapReady && LAYOUT.dependsOnAngle) buildCity(number || "x"); // 3D buildings lean "up" the screen
   }
   function initMap(dest) {
     if (!mapReady) {
+      ANGLE = bestAngle();
       buildCity(number || "x");
       setAngle();
       mapReady = true;
+      $("mapWrap").dataset.layout = LAYOUT_NAME;
     }
     buildPins(dest);
     buildMoped();

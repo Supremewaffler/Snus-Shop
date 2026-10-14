@@ -47,18 +47,21 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .map-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
 /* Map styles: pick with mapStyle in config.js (or ?map=… to preview). "neon" is the default. */
 .map-wrap {
-  --sea: #0a0c2a; --land: #241f63; --edge: #3b37a0; --edge-o: .55;
+  --sea: #0a0c2a;
+  --side: #3a3290; --plaza: #2e2878; --land: #241f63; --edge: #3b37a0; --edge-o: .55;
   --b1: #6f63e0; --b2: #7d72ea; --b3: #6257cf; --b4: #8a80f0;
   --park: #2f3488; --tree: #3c46a8; --ave: #9d94ff; --ave-o: .35; --bridge: #4a43b3; --rail: #a69cff;
   --r-done: #ffffff; --r-todo: #e9e6df; --r-glow: #ffffff; --r-glow-o: .16;
 }
 .map-wrap[data-map="noir"] {
+  --side: #18181d; --plaza: #1c1c21;
   --sea: #050506; --land: #111114; --edge: #4a4a52; --edge-o: .7;
   --b1: #2a2a31; --b2: #313139; --b3: #24242a; --b4: #3a3a43;
   --park: #16181a; --tree: #22262a; --ave: #b9b5ac; --ave-o: .22; --bridge: #2c2c33; --rail: #c9c5bc;
   --r-done: #f2f0ea; --r-todo: #9d9a92; --r-glow: #ffffff; --r-glow-o: .14;
 }
 .map-wrap[data-map="night"] {
+  --side: #0d1726; --plaza: #0f1b2e;
   --sea: #030c18; --land: #0a1424; --edge: #1f4a7a; --edge-o: .7;
   --b1: #18263d; --b2: #1d2e49; --b3: #142135; --b4: #f0a53a;
   --park: #0b2620; --tree: #12392f; --ave: #ffc857; --ave-o: .22; --bridge: #1b2c47; --rail: #ffc857;
@@ -66,12 +69,14 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 }
 .map-wrap[data-map="night"] .b4 { opacity: .55; }
 .map-wrap[data-map="day"] {
+  --side: #cbc3b2; --plaza: #f8f3e7;
   --sea: #8fd3ff; --land: #efe9dc; --edge: #ffffff; --edge-o: .9;
   --b1: #ffffff; --b2: #f8f5ef; --b3: #e9e3d6; --b4: #dfd8c9;
   --park: #b5e2a2; --tree: #8ccf77; --ave: #ffcf5c; --ave-o: 1; --bridge: #ffcf5c; --rail: #e3ad35;
   --r-done: #1a73e8; --r-todo: #1a73e8; --r-glow: #1a73e8; --r-glow-o: .18;
 }
 .map-wrap[data-map="blueprint"] {
+  --side: #0d3d6f; --plaza: #134b83;
   --sea: #0a2c52; --land: #0f3f73; --edge: #cfe8ff; --edge-o: .5;
   --b1: #16599a; --b2: #1a63a8; --b3: #134f8a; --b4: #1f6db8;
   --park: #0f4a6e; --tree: #17618c; --ave: #e6f3ff; --ave-o: .45; --bridge: #1a5c99; --rail: #e6f3ff;
@@ -98,6 +103,24 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .tree { fill: var(--tree); }
 .avenue { stroke: var(--ave); stroke-width: 5; opacity: var(--ave-o); fill: none; }
 .bridge { fill: var(--bridge); }
+.bridge-edge { fill: none; stroke: var(--rail); stroke-width: 26; opacity: .7; stroke-linecap: butt; }
+.bridge-deck { fill: none; stroke: var(--bridge); stroke-width: 20; stroke-linecap: butt; }
+.side { fill: color-mix(in srgb, var(--side) 55%, #000); }
+/* 3D city: lighter roofs so the buildings stand out from their walls */
+.map-wrap[data-layout="city3d"] .b1 { fill: color-mix(in srgb, var(--b1) 72%, #fff); }
+.map-wrap[data-layout="city3d"] .b2 { fill: color-mix(in srgb, var(--b2) 78%, #fff); }
+.map-wrap[data-layout="city3d"] .b3 { fill: color-mix(in srgb, var(--b3) 82%, #fff); }
+.map-wrap[data-layout="city3d"] .b4 { fill: color-mix(in srgb, var(--b4) 70%, #fff); }
+.plaza { fill: var(--plaza); }
+.park-ring { stroke: var(--park); stroke-width: 46; }
+.metro-dot { fill: var(--ave); opacity: .18; }
+.metro-river { fill: none; stroke: var(--sea); stroke-width: 84; stroke-linejoin: round; stroke-linecap: round; }
+.metro-river-edge { fill: none; stroke: var(--edge); stroke-width: 90; stroke-linejoin: round; stroke-linecap: round; opacity: var(--edge-o); }
+.metro-line { fill: none; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+.metro-station { fill: var(--land); stroke: #fff; stroke-width: 3.5; }
+.map-wrap[data-layout="metro"] .route-done { stroke-width: 13; }
+.map-wrap[data-layout="metro"] .route-todo { stroke-width: 9; stroke-dasharray: 0.1 16; }
+.map-wrap[data-layout="metro"] .route-glow { stroke-width: 26; }
 .bridge-rail { stroke: var(--rail); stroke-width: 2; opacity: .7; }
 
 .route-glow { fill: none; stroke: var(--r-glow); stroke-width: 16; opacity: var(--r-glow-o); stroke-linecap: round; stroke-linejoin: round; }

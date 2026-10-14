@@ -46,7 +46,7 @@ The map only redraws while something is moving, so an idle page uses almost no b
 
 ## Map styles
 
-`mapStyle` in `config.js` picks the map's look:
+`mapStyle` in `config.js` picks the map's colours (currently `noir`):
 
 - `neon`: purple game map (default)
 - `noir`: black and silver, matching the brand
@@ -55,6 +55,17 @@ The map only redraws while something is moving, so an idle page uses almost no b
 - `blueprint`: blue and white
 
 To preview any style without changing the site, add `&map=<style>` to a link, e.g. `?p=demo&map=noir`.
+
+## Map layouts
+
+`mapLayout` in `config.js` picks the city's design. All four have the same four stops, and they work with any map style:
+
+- `grid`: avenues, a river and an island coast (default)
+- `city3d`: the same city with raised 3D buildings, taller downtown
+- `oldtown`: ring roads around a market square, with a ring park and a river (Kraków-style)
+- `metro`: a transit-map look, with the delivery route as the main line
+
+The layouts are drawn in `layouts.js`. The page picks the map rotation that fits the screen best. To preview a layout, add `&layout=<name>` to a link, e.g. `?p=demo&map=noir&layout=city3d`.
 
 ## Flavour carousel
 
