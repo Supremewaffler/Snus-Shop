@@ -299,6 +299,7 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
   padding: 14px 18px; border-radius: 14px; text-decoration: none; font-weight: 800; color: #fff;
   background: linear-gradient(90deg, #f58529, #dd2a7b 45%, #8134af 75%, #515bd4);
 }
+.ig-btn svg { flex: none; }
 .ig-note { text-align: center; margin: 8px 0 0; }
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; z-index: 10;

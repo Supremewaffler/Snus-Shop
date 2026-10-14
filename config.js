@@ -12,9 +12,10 @@ window.TRACK_CONFIG = {
 
   // Product lines: name shown on the tin and in the filter, strength, and the tin's rim colour.
   lines: {
-    pablo: { name: "Pablo Exclusive", short: "PABLO", strength: "50 mg/g", rim: "#d8b45a" },
-    cuba:  { name: "Cuba Black",      short: "CUBA",  strength: "66 mg/g", rim: "#d9d9de" },
-    max:   { name: "K#rwa Collection Max", short: "K#RWA MAX", strength: "64 mg/g", rim: "#e5484d" }
+    cuba:    { name: "Cuba",    short: "CUBA",    strength: "66 mg/g", rim: "#d9d9de" },
+    killa:   { name: "Killa",   short: "KILLA",   strength: "12 mg/g", rim: "#ff5fa2" },
+    iceberg: { name: "Iceberg", short: "ICEBERG", strength: "50 mg/g", rim: "#8fd8ff" },
+    pablo:   { name: "Pablo",   short: "PABLO",   strength: "50 mg/g", rim: "#d8b45a" }
   },
 
   // Flavours in the "Popular flavours" carousel, in this order.
@@ -23,26 +24,22 @@ window.TRACK_CONFIG = {
   //   color: the flavour's colour on the drawn tin
   //   image: optional photo in assets/products/ (square works best); replaces the drawn tin
   products: [
-    { line: "pablo", name: "Mango Ice",        emoji: "🥭🧊", color: "#ffb347" },
-    { line: "pablo", name: "Passion Fruit",    emoji: "🥭🌴", color: "#b06cff" },
-    { line: "pablo", name: "Tropical Punch",   emoji: "🌴🥊", color: "#ff6f61" },
-    { line: "pablo", name: "Cherry Cola",      emoji: "🍒🥤", color: "#c2183c" },
-    { line: "pablo", name: "Dark Cherry",      emoji: "🖤🍒", color: "#7a0a24" },
-    { line: "pablo", name: "Kiwi",             emoji: "🥝",   color: "#7cc242" },
-    { line: "pablo", name: "Grape Ice",        emoji: "🍇🧊", color: "#9b59b6" },
-    { line: "pablo", name: "Blue Raspberry",   emoji: "🫐🍓", color: "#3d7bff" },
-    { line: "pablo", name: "Lemonade",         emoji: "🍋🥤", color: "#ffd84d" },
-    { line: "pablo", name: "Sour Blueberries", emoji: "🫐🍋", color: "#5b6cff" },
-    { line: "pablo", name: "Blue Mint",        emoji: "🫐🌿", color: "#2ec4b6" },
+    { line: "cuba",    name: "Cherry",                 emoji: "🍒",   color: "#c2183c" },
+    { line: "cuba",    name: "Forest Berries",         emoji: "🌲🫐", color: "#b0306b" },
+    { line: "cuba",    name: "Blueberry",              emoji: "🫐",   color: "#3f51b5" },
+    { line: "cuba",    name: "Blackcurrant",           emoji: "🫐",   color: "#5a2160" },
+    { line: "cuba",    name: "Apple Juice",            emoji: "🍏",   color: "#6fb83a" },
+    { line: "cuba",    name: "Grape",                  emoji: "🍇",   color: "#8e44ad" },
+    { line: "cuba",    name: "Banana Hit",             emoji: "🔥",   color: "#e8b923" },
+    { line: "cuba",    name: "Blackberry",             emoji: "🫐",   color: "#4b2a6b" },
+    { line: "cuba",    name: "Pineapple",              emoji: "🍍",   color: "#f2a93b" },
+    { line: "cuba",    name: "Ice Spearmint",          emoji: "🌿",   color: "#2ec4b6" },
 
-    { line: "cuba",  name: "Grape",            emoji: "🍇",     color: "#8e44ad" },
-    { line: "cuba",  name: "Forest Berries",   emoji: "🫐🍓🌲", color: "#b0306b" },
-    { line: "cuba",  name: "Black Currant",    emoji: "🫐🖤",   color: "#5a2160" },
-    { line: "cuba",  name: "Blueberry",        emoji: "🫐",     color: "#3f51b5" },
+    { line: "killa",   name: "Grape Ice",              emoji: "🍇",   color: "#9b59b6" },
 
-    { line: "max",   name: "Grape Ice",        emoji: "🍇🧊",   color: "#9b59b6" },
-    { line: "max",   name: "Blueberry Ice",    emoji: "🫐🧊",   color: "#4f7cff" },
-    { line: "max",   name: "Triple Mango",     emoji: "🥭🥭🥭", color: "#ffa726" },
-    { line: "max",   name: "Strong Mint",      emoji: "🌿❄️",   color: "#26c6a6" }
+    { line: "iceberg", name: "Grape",                  emoji: "🍇",   color: "#8e44ad" },
+    { line: "iceberg", name: "Black",                  emoji: "🧊",   color: "#59606b" },
+
+    { line: "pablo",   name: "Exclusive Frosted Mint", emoji: "🌿",   color: "#26c6a6" }
   ]
 };

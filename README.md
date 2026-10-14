@@ -77,7 +77,7 @@ Below it, the **Zamów … na Instagramie** button opens a chat with the shop's 
 
 The flavours come from the shop's menu and are set in `config.js`:
 
-- **`lines`** lists the product lines: Pablo Exclusive 50 mg/g, Cuba Black 66 mg/g and K#rwa Collection Max 64 mg/g. Each has a strength and a tin rim colour. When there's more than one line, customers see filter buttons for them.
+- **`lines`** lists the product lines: Cuba 66 mg/g, Killa 12 mg/g, Iceberg 50 mg/g and Pablo 50 mg/g. Each has a strength and a tin rim colour. When there's more than one line, customers see filter buttons for them.
 - **`products`** lists the flavours. Each one has a line, a name, emoji and a colour.
 
 Without a photo, the page draws a tin in the flavour's colour, with the line name, emoji and strength. To use a real photo, put it in `assets/products/` (square works best) and add `image: "assets/products/<file>"` to that flavour. When stock changes, add, remove or reorder lines in `products`.
