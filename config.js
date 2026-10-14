@@ -7,6 +7,14 @@ window.TRACK_CONFIG = {
   mapLayout: "city3d",         // "grid", "city3d", "oldtown" or "metro"
   routeColor: "",              // optional: "red", "cyan", "gold", "green" or "white" (blank = the style's own)
 
+  // Extra features (directions, your order, celebration, pickup countdown, night map, weather,
+  // status alerts, share/QR and "My parcels"). Preview them with ?preview=1 before switching on.
+  extras: false,
+  thanksCode: "",              // discount code shown when the parcel arrives (blank = no code)
+  pickupHours: 48,             // how long InPost usually keeps a parcel in the Paczkomat
+  autoNight: true,             // switch the map to the night style after sunset
+  analytics: false,            // Vercel Web Analytics — enable it in the Vercel dashboard first
+
   // Instagram account customers are sent to from the flavour carousel.
   instagram: "snus.shop24",
 

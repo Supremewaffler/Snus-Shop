@@ -44,6 +44,22 @@ The map can be moved and zoomed within the city's limits:
 
 The map only redraws while something is moving, so an idle page uses almost no battery. While someone is dragging or pinching, the page slides the already-drawn map instead of redrawing it, and redraws once, sharply, when they let go. Decorative pins are hidden when zoomed out past the whole-route view.
 
+## Extra features (in preview)
+
+`extras.js` and `extras.css` add these, and only load when `extras: true` is set in `config.js`. Until then, add `&preview=1` to any link to try them:
+
+1. **Directions:** "Nawiguj do Paczkomatu" opens Apple Maps or Google Maps.
+2. **Your order:** pick a flavour when making the link (`&f=<flavour>`). The customer sees "Twoje zamówienie" with an "Order again" button.
+3. **Celebration:** confetti, a hopping rider and a vibration when the parcel reaches the Paczkomat or is collected. Optionally shows a thank-you discount code (`thanksCode`).
+4. **Pickup countdown:** about `pickupHours` (48) from when the parcel was placed in the Paczkomat, labelled as approximate.
+5. **Night map:** switches to the night style after sunset at the Paczkomat (`autoNight`).
+6. **Weather:** the temperature and live rain or snow on the map, from Open-Meteo (free, no key). To test, add `&weather=rain|snow|clear` and `&time=night|day` to a preview link.
+7. **Status alerts:** a vibration, a message and a flashing tab title when the status changes while the page is open.
+8. **Share and QR:** share to WhatsApp or SMS, or download a QR code to print, on the link maker.
+9. **My parcels:** every link made on this phone, with its live InPost status. Saved on that phone only.
+
+**Visitor stats:** turn on Web Analytics in the Vercel dashboard, then set `analytics: true` in `config.js`.
+
 ## Map styles
 
 `mapStyle` in `config.js` picks the map's colours (currently `noir`):

@@ -92,6 +92,16 @@
   var lastData = null;
   var timer = null;
 
+  // Extra features live in extras.js. It only loads when switched on in config.js (extras: true)
+  // or when previewing with ?preview=1, so customers download nothing extra until then.
+  var PREVIEW = params.get("preview") === "1";
+  var EXTRAS = CFG.extras === true || PREVIEW;
+  var hookFns = {}, hookLast = {};
+  function emit(evt, payload) {
+    hookLast[evt] = payload;
+    (hookFns[evt] || []).forEach(function (fn) { try { fn(payload); } catch (e) { if (window.console) console.error(e); } });
+  }
+
   function t() { return T[lang]; }
   function setText(id, v) { var el = $(id); if (el) el.textContent = v; }
   function fmtDate(iso) {
@@ -660,6 +670,8 @@
     setText("lblLive", finished ? x.done : x.live);
     setText("checkedAt", new Date().toLocaleTimeString(lang === "pl" ? "pl-PL" : "en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Warsaw" }));
     document.title = st.title + " · " + CFG.brandName;
+    emit("render", { data: data, first: first, current: current, details: details, delivered: delivered, problem: problem,
+                     key: key, idx: idx, moving: moving, dest: dest, machine: machine, finished: finished, title: st.title });
     return finished;
   }
 
@@ -888,8 +900,9 @@
     var p = currentProduct();
     if (p) setText("igLabel", t().order.replace("{product}", p.name));
   }
-  function orderMessage() {
-    var p = currentProduct(), x = t(), l = p ? lineOf(p) : {};
+  function orderMessage() { return orderMessageFor(currentProduct()); }
+  function orderMessageFor(p) {
+    var x = t(), l = p ? lineOf(p) : {};
     var what = p ? productTitle(p) + (l.strength ? " (" + l.strength + ")" : "") : "";
     var msg = x.orderMsg.replace("{product}", what);
     if (number && !isDemo) msg += "\n" + x.orderRef.replace("{number}", prettyNumber(number));
@@ -910,6 +923,7 @@
   }
   function orderClick() {
     copyText(orderMessage());
+    if (window.va) window.va("event", { name: "Instagram order", data: { product: (currentProduct() || {}).name || "" } });
     toast(t().copied);
   }
   var toastTimer = null;
@@ -925,12 +939,15 @@
   // ---------- link maker ----------
   function setupMaker() {
     show("makeView");
+    emit("makerReady", {});
     Array.prototype.forEach.call(document.querySelectorAll("#makeView img[data-src]"), function (img) { img.src = img.getAttribute("data-src"); });
     $("mkForm").addEventListener("submit", function (ev) {
       ev.preventDefault();
       var n = $("mkInput").value.replace(/[^0-9A-Za-z]/g, "");
       if (!n) return;
-      var url = location.origin + location.pathname + "?p=" + n;
+      var made = { number: n, url: location.origin + location.pathname + "?p=" + n };
+      emit("makeLink", made);                 // extras can add the flavour / remember the link
+      var url = made.url;
       $("mkLink").value = url;
       $("mkOpen").href = url;
       $("mkOut").hidden = false;
@@ -941,6 +958,41 @@
       if (navigator.clipboard) navigator.clipboard.writeText(v).then(done, function () { $("mkLink").select(); });
       else { $("mkLink").select(); document.execCommand("copy"); done(); }
     });
+  }
+
+  // ---------- hooks for extras.js ----------
+  function slugOf(p) { return (p.line + "-" + p.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+  window.SnusTrack = {
+    on: function (evt, fn) { (hookFns[evt] = hookFns[evt] || []).push(fn); if (hookLast[evt]) fn(hookLast[evt]); },
+    CFG: CFG, API: API, params: params, number: number, isDemo: isDemo, preview: PREVIEW,
+    t: function () { return t(); }, lang: function () { return lang; },
+    fmtDate: fmtDate, prettyNumber: prettyNumber, statusText: statusText, loadStatuses: loadStatuses,
+    toast: function (m) { toast(m); }, copyText: copyText,
+    products: function () { return CFG.products || []; }, slugOf: slugOf, productTitle: productTitle, lineOf: lineOf, drawTin: drawTin,
+    orderMessageFor: orderMessageFor,
+    igUrl: function () { return "https://ig.me/m/" + encodeURIComponent(CFG.instagram); },
+    selectProductBySlug: function (slug) {
+      var list = CFG.products || [], found = -1;
+      for (var i = 0; i < list.length; i++) if (slugOf(list[i]) === slug) found = i;
+      if (found < 0) return null;
+      shopFilter = "all"; buildFilters(); buildShop();
+      selectProduct(shopList.indexOf(list[found]), true);
+      return list[found];
+    },
+    baseMapStyle: function () { return baseStyle; },
+    setMapStyle: function (name) { if (MAP_STYLES.indexOf(name) >= 0) $("mapWrap").dataset.map = name; }
+  };
+  // Visitor stats (Vercel Web Analytics) — switch on in the Vercel dashboard first, then set analytics: true.
+  if (CFG.analytics) {
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    var va = document.createElement("script");
+    va.defer = true; va.src = "/_vercel/insights/script.js";
+    document.head.appendChild(va);
+  }
+  if (EXTRAS) {
+    var xs = document.createElement("script");
+    xs.src = "extras.js";
+    document.head.appendChild(xs);
   }
 
   // ---------- boot ----------
@@ -966,7 +1018,8 @@
   setInterval(updateMopedTarget, 5000); // keep creeping closer between InPost updates
 
   var mapStyle = (params.get("map") || CFG.mapStyle || "neon").toLowerCase();
-  $("mapWrap").dataset.map = MAP_STYLES.indexOf(mapStyle) >= 0 ? mapStyle : "neon";
+  var baseStyle = MAP_STYLES.indexOf(mapStyle) >= 0 ? mapStyle : "neon";
+  $("mapWrap").dataset.map = baseStyle;
   // Optional route colour on top of the map style: "red", "cyan", "gold", "green" or "white".
   var ROUTE_COLORS = { red: "#ff4d4d", cyan: "#4fd8ff", gold: "#ffc857", green: "#3ee08a", white: "#ffffff" };
   var routeColor = ROUTE_COLORS[(params.get("route") || CFG.routeColor || "").toLowerCase()];
