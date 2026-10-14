@@ -426,7 +426,9 @@
     var pinch = null, hintTimer = null, oneStart = null;
     function mid(t) { var r = wrap.getBoundingClientRect(); return [(t[0].clientX + t[1].clientX) / 2 - r.left, (t[0].clientY + t[1].clientY) / 2 - r.top]; }
     function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+    function hideHint() { clearTimeout(hintTimer); wrap.classList.remove("show-hint"); }
     svg.addEventListener("touchstart", function (e) {
+      if (e.touches.length >= 2) hideHint();     // they've got it: two fingers are down
       if (e.touches.length === 2) {
         pinch = { m: mid(e.touches), d: dist(e.touches), box: Object.assign({}, liveCam()) };
         e.preventDefault();
@@ -437,6 +439,7 @@
     svg.addEventListener("touchmove", function (e) {
       if (e.touches.length === 2 && pinch) {
         e.preventDefault();
+        hideHint();
         var m = mid(e.touches), f = dist(e.touches) / pinch.d, b = pinch.box;
         var z = zoomBox(b, f, pinch.m[0], pinch.m[1]);           // zoom around where the pinch started
         var unit = z.w / mapSize()[0];
@@ -446,7 +449,7 @@
         if (Math.hypot(dx, dy) > 12) {
           wrap.classList.add("show-hint");
           clearTimeout(hintTimer);
-          hintTimer = setTimeout(function () { wrap.classList.remove("show-hint"); }, 1600);
+          hintTimer = setTimeout(hideHint, 1200);
           oneStart = null;
         }
       }
