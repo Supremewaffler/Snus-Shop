@@ -95,7 +95,8 @@
   // Extra features live in extras.js. It only loads when switched on in config.js (extras: true)
   // or when previewing with ?preview=1, so customers download nothing extra until then.
   var PREVIEW = params.get("preview") === "1";
-  var EXTRAS = CFG.extras === true || PREVIEW;
+  var EXTRAS = PREVIEW || CFG.extras === true ||
+    (!!CFG.extras && typeof CFG.extras === "object" && Object.keys(CFG.extras).some(function (k) { return CFG.extras[k]; }));
   var hookFns = {}, hookLast = {};
   function emit(evt, payload) {
     hookLast[evt] = payload;

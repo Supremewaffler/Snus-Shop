@@ -44,9 +44,9 @@ The map can be moved and zoomed within the city's limits:
 
 The map only redraws while something is moving, so an idle page uses almost no battery. While someone is dragging or pinching, the page slides the already-drawn map instead of redrawing it, and redraws once, sharply, when they let go. Decorative pins are hidden when zoomed out past the whole-route view.
 
-## Extra features (in preview)
+## Extra features
 
-`extras.js` and `extras.css` add these, and only load when `extras: true` is set in `config.js`. Until then, add `&preview=1` to any link to try them:
+`extras.js` and `extras.css` add these. Each one is switched on separately under `extras` in `config.js`; currently only **2 (order)** and **9 (myParcels)** are on. Add `&preview=1` to any link to try all of them:
 
 1. **Directions:** "Nawiguj do Paczkomatu" opens Apple Maps or Google Maps.
 2. **Your order:** pick a flavour when making the link (`&f=<flavour>`). The customer sees "Twoje zamówienie" with an "Order again" button.

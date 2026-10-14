@@ -15,6 +15,9 @@
   function h(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function pl() { return S.lang() === "pl"; }
   function L(plText, enText) { return pl() ? plText : enText; }
+  // Which features are on: everything in preview, otherwise what config.js switches on
+  // (extras: true for all, or e.g. extras: { order: true, myParcels: true }).
+  function on(name) { return S.preview || CFG.extras === true || !!(CFG.extras && CFG.extras[name]); }
 
   // styles for everything below
   var css = document.createElement("link");
@@ -232,7 +235,8 @@
   function applyWeather() {
     // 5. night map — only for dark base styles; the day style stays as chosen
     var base = S.baseMapStyle();
-    if (CFG.autoNight !== false && (base === "noir" || base === "neon")) S.setMapStyle(isNight() ? "night" : base);
+    if (on("nightMap") && CFG.autoNight !== false && (base === "noir" || base === "neon")) S.setMapStyle(isNight() ? "night" : base);
+    if (!on("weather")) return;
 
     // 6. weather chip + rain/snow
     var kind = forced() || (weather ? precip(weather.code) : null);
@@ -308,17 +312,19 @@
       dest = { lat: loc.latitude, lng: loc.longitude, city: line2.replace(/^\s*\d{2}-\d{3}\s*/, "").trim() };
     } else dest = null;
 
-    updateDirections();                                   // 1
-    updateOrderBox();                                     // 2
+    if (on("directions")) updateDirections();             // 1
+    if (on("order")) updateOrderBox();                    // 2
 
     var waiting = r.dest === "locker" && r.key === "at3" && !r.delivered && !r.problem;
     var replay = S.isDemo && lastStatus !== r.current;   // in the demo, celebrate each time you switch to it
-    if (r.delivered) maybeCelebrate("delivered", replay);              // 3
-    else if (waiting) maybeCelebrate("ready", replay);
-    updateThanks(r.delivered || waiting);
+    if (on("celebrate")) {                                // 3
+      if (r.delivered) maybeCelebrate("delivered", replay);
+      else if (waiting) maybeCelebrate("ready", replay);
+      updateThanks(r.delivered || waiting);
+    }
 
     readySince = null;                                     // 4
-    if (waiting) {
+    if (waiting && on("countdown")) {
       for (var i = r.details.length - 1; i >= 0; i--) {
         if (/^ready_to_pickup/.test(r.details[i].status)) { readySince = new Date(r.details[i].datetime).getTime(); break; }
       }
@@ -328,13 +334,12 @@
     clearInterval(countdownTimer);
     if (readySince) countdownTimer = setInterval(updateCountdown, 60e3);
 
-    fetchWeather();                                       // 5 + 6
-    applyWeather();
+    if (on("weather") || on("nightMap")) { fetchWeather(); applyWeather(); }   // 5 + 6
 
-    if (lastStatus && lastStatus !== r.current) statusChanged(r.title);   // 7
+    if (on("alerts") && lastStatus && lastStatus !== r.current) statusChanged(r.title);   // 7
     lastStatus = r.current;
   });
-  setInterval(function () { fetchWeather(); applyWeather(); }, 5 * 60e3);
+  if (on("weather") || on("nightMap")) setInterval(function () { fetchWeather(); applyWeather(); }, 5 * 60e3);
 
   // =====================================================================
   //  8 + 9. Link maker: flavour picker, share, QR code, "My parcels"
@@ -342,11 +347,33 @@
   var SAVED = "x-my-parcels";
   function loadSaved() { try { return JSON.parse(localStorage.getItem(SAVED) || "[]"); } catch (e) { return []; } }
   function storeSaved(list) { try { localStorage.setItem(SAVED, JSON.stringify(list.slice(0, 60))); } catch (e) {} }
-  function linkFor(n, f) { return location.origin + location.pathname + "?p=" + n + (f ? "&f=" + f : "") + (S.preview ? "&preview=1" : ""); }
+  function linkFor(n, f) { return location.origin + location.pathname + "?p=" + n + (f && on("order") ? "&f=" + f : "") + (S.preview ? "&preview=1" : ""); }
 
   S.on("makerReady", function () {
     var form = $("mkForm");
     // flavour picker (optional) so the customer sees "Your order"
+    if (on("order")) addFlavourPicker(form);
+    // share row + QR under the generated link
+    if (on("share")) {
+      var out = $("mkOut");
+      var share = h("div", "x-share");
+      share.id = "xShare";
+      out.parentNode.insertBefore(share, out.nextSibling);
+      var qr = h("div", "x-qr");
+      qr.id = "xQr"; qr.hidden = true;
+      share.parentNode.insertBefore(qr, share.nextSibling);
+    }
+    // my parcels
+    if (on("myParcels")) {
+      var mine = h("div", "x-mine");
+      mine.id = "xMine";
+      var demoP = document.querySelector("#makeView p.small");
+      demoP.parentNode.insertBefore(mine, demoP);
+      renderMine();
+    }
+  });
+
+  function addFlavourPicker(form) {
     var sel = h("select", "x-flavour");
     sel.id = "xFlavour";
     var none = h("option", null, L("Smak (opcjonalnie) — pokaże się klientowi", "Flavour (optional) — shown to the customer"));
@@ -358,31 +385,17 @@
       var o = h("option", null, p.name); o.value = S.slugOf(p); g.appendChild(o);
     });
     form.insertBefore(sel, $("mkBtn"));      // between the number and the "Create link" button
-
-    // share row + QR under the generated link
-    var out = $("mkOut");
-    var share = h("div", "x-share");
-    share.id = "xShare";
-    out.parentNode.insertBefore(share, out.nextSibling);
-    var qr = h("div", "x-qr");
-    qr.id = "xQr"; qr.hidden = true;
-    share.parentNode.insertBefore(qr, share.nextSibling);
-
-    // my parcels
-    var mine = h("div", "x-mine");
-    mine.id = "xMine";
-    var demoP = document.querySelector("#makeView p.small");
-    demoP.parentNode.insertBefore(mine, demoP);
-    renderMine();
-  });
+  }
 
   S.on("makeLink", function (made) {
     var f = $("xFlavour") ? $("xFlavour").value : "";
     made.url = linkFor(made.number, f);
-    var list = loadSaved().filter(function (x) { return x.n !== made.number; });
-    list.unshift({ n: made.number, f: f, at: Date.now() });
-    storeSaved(list);
-    setTimeout(function () { buildShare(made.url); renderMine(); }, 0);
+    if (on("myParcels")) {
+      var list = loadSaved().filter(function (x) { return x.n !== made.number; });
+      list.unshift({ n: made.number, f: f, at: Date.now() });
+      storeSaved(list);
+    }
+    setTimeout(function () { if (on("share")) buildShare(made.url); renderMine(); }, 0);
   });
 
   function buildShare(url) {

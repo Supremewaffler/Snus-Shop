@@ -9,7 +9,17 @@ window.TRACK_CONFIG = {
 
   // Extra features (directions, your order, celebration, pickup countdown, night map, weather,
   // status alerts, share/QR and "My parcels"). Preview them with ?preview=1 before switching on.
-  extras: false,
+  extras: {
+    directions: false,         // 1. "Navigate to the Paczkomat" button
+    order: true,               // 2. "Your order" + order again (pick the flavour when making the link)
+    celebrate: false,          // 3. confetti when it arrives (+ thanksCode below)
+    countdown: false,          // 4. pickup countdown
+    nightMap: false,           // 5. night map after sunset
+    weather: false,            // 6. weather + rain/snow on the map
+    alerts: false,             // 7. alert when the status changes
+    share: false,              // 8. share buttons + QR code on the link maker
+    myParcels: true            // 9. "My parcels" list on the link maker
+  },
   thanksCode: "",              // discount code shown when the parcel arrives (blank = no code)
   pickupHours: 48,             // how long InPost usually keeps a parcel in the Paczkomat
   autoNight: true,             // switch the map to the night style after sunset
