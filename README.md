@@ -60,11 +60,10 @@ To preview any style without changing the site, add `&map=<style>` to a link, e.
 
 `mapLayout` in `config.js` picks the city's design. All four have the same four stops, and they work with any map style:
 
-- `grid`: avenues, a river and an island coast (default)
-- `city3d`: the same city with raised 3D buildings, taller downtown
+- `grid`: avenues, a river and an island coast
+- `city3d`: the same city with raised 3D buildings, taller downtown (live)
 - `oldtown`: ring roads around a market square, with a ring park and a river (Kraków-style)
 - `metro`: a transit-map look, with the delivery route as the main line
-- `organic`: a real-looking European city, with irregular streets, main roads, roundabouts, parks and a winding river. The route follows the streets, with a dot at every turn.
 
 `routeColor` (`red`, `cyan`, `gold`, `green` or `white`) overrides the route colour of any style. To preview a route colour, add `&route=red` to a link.
 

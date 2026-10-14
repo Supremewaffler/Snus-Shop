@@ -9,7 +9,6 @@
 //   randPoint(rnd)   a random spot for a decorative pin
 //   dependsOnAngle   true when the drawing changes with rotation (3D buildings)
 //   pois         how many decorative pins to scatter (default 18)
-//   routeDots    draw a small dot at every turn of the route
 (function () {
   "use strict";
   var CX = 700, CY = 700;
@@ -160,8 +159,8 @@
       var ux = 0.3 * ca - sa, uy = -0.3 * sa - ca;
       gridBuildings(rnd, parks, function (x, y, w, h) {
         var d = Math.hypot(x - 760, y - 640);
-        var H = 8 + rnd() * 14 + Math.max(0, 80 - d / 9) * (0.4 + rnd() * 0.6);
-        if (rnd() < 0.03) H += 40 + rnd() * 50;
+        var H = 4 + rnd() * 9 + Math.max(0, 52 - d / 13) * (0.4 + rnd() * 0.6);
+        if (rnd() < 0.025) H += 30 + rnd() * 30;
         var key = (x + w / 2 - CX) * sa + (y + h / 2 - CY) * ca;
         list.push({ x: x, y: y, w: w, h: h, H: H, key: key, cls: CLS[Math.floor(rnd() * 4)] });
       }, false);
@@ -332,128 +331,5 @@
     }
   };
 
-  // ===================================================================
-  //  ORGANIC — irregular streets, a winding river, roundabouts and parks
-  //  (like a real European city map). The route follows the streets.
-  // ===================================================================
-  var ORG = (function () {
-    var SP = 140, I0 = -6, I1 = 17, J0 = -6, J1 = 17;
-    // fixed jitter so the streets (and therefore the route) never change
-    var seed = 9137;
-    function frand() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
-    var nodes = {};
-    for (var i = I0; i <= I1; i++) for (var j = J0; j <= J1; j++) {
-      var x = i * SP + 46 * Math.sin(j * 0.55 + i * 0.21) + (frand() - 0.5) * 50;
-      var y = j * SP + 40 * Math.sin(i * 0.47 - j * 0.18) + (frand() - 0.5) * 50;
-      nodes[i + ":" + j] = [x, y];
-    }
-    function N(i, j) { return nodes[i + ":" + j]; }
-    function riverX(y) { return 900 + 120 * Math.sin(y / 260) + 40 * Math.sin(y / 97); }
-    function isWater(x, y) { return Math.abs(x - riverX(y)) < 66; }
-    function mainH(j) { return j % 3 === 0; }   // east-west main roads
-    function mainV(i) { return i % 3 === 0; }   // north-south main roads
-    function edgeWet(a, b) {
-      for (var k = 0; k <= 8; k++) if (isWater(a[0] + (b[0] - a[0]) * k / 8, a[1] + (b[1] - a[1]) * k / 8)) return true;
-      return false;
-    }
-    // shortest path over the street grid; main roads are preferred and only they cross the river
-    function path(from, to) {
-      var dist = {}, prev = {}, done = {}, key0 = from.join(":"), keyT = to.join(":");
-      dist[key0] = 0;
-      while (true) {
-        var best = null, bd = Infinity;
-        for (var k in dist) if (!done[k] && dist[k] < bd) { bd = dist[k]; best = k; }
-        if (best === null || best === keyT) break;
-        done[best] = true;
-        var ij = best.split(":").map(Number);
-        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
-          var ni = ij[0] + d[0], nj = ij[1] + d[1];
-          if (ni < I0 || ni > I1 || nj < J0 || nj > J1) return;
-          var a = N(ij[0], ij[1]), b = N(ni, nj), main = d[0] ? mainH(ij[1]) : mainV(ij[0]);
-          if (!main && edgeWet(a, b)) return;
-          var w = Math.hypot(b[0] - a[0], b[1] - a[1]) * (main ? 0.7 : 1), nk = ni + ":" + nj;
-          if (dist[nk] === undefined || bd + w < dist[nk]) { dist[nk] = bd + w; prev[nk] = best; }
-        });
-      }
-      var out = [], cur = keyT;
-      while (cur) { out.unshift(N.apply(null, cur.split(":").map(Number))); cur = prev[cur]; }
-      return out;
-    }
-    var STOPS = [[1, 9], [3, 6], [8, 5], [10, 2]];
-    var line = [N(1, 9)], stops = [0];
-    for (var s = 1; s < STOPS.length; s++) {
-      var seg = path(STOPS[s - 1], STOPS[s]);
-      line = line.concat(seg.slice(1));
-      stops.push(line.length - 1);
-    }
-    return { SP: SP, I0: I0, I1: I1, J0: J0, J1: J1, N: N, riverX: riverX, isWater: isWater, mainH: mainH, mainV: mainV, line: line, stops: stops };
-  })();
-
-  function shrink(poly, by) {
-    var cx = 0, cy = 0;
-    poly.forEach(function (p) { cx += p[0]; cy += p[1]; });
-    cx /= poly.length; cy /= poly.length;
-    return poly.map(function (p) {
-      var dx = cx - p[0], dy = cy - p[1], l = Math.hypot(dx, dy) || 1, k = Math.min(by, l * 0.45) / l;
-      return [p[0] + dx * k, p[1] + dy * k];
-    });
-  }
-  function bilerp(A, B, C, D, u, v) {
-    return [(1 - u) * (1 - v) * A[0] + u * (1 - v) * B[0] + u * v * C[0] + (1 - u) * v * D[0],
-            (1 - u) * (1 - v) * A[1] + u * (1 - v) * B[1] + u * v * C[1] + (1 - u) * v * D[1]];
-  }
-
-  var organic = {
-    route: ORG.line, stops: ORG.stops, angles: [0, -20, 20, 45, -45, 70, -70, 90], routeDots: true, pois: 8,
-    isWater: ORG.isWater,
-    randPoint: function (rnd) { return [-300 + rnd() * 2000, -300 + rnd() * 1900]; },
-    build: function (rnd) {
-      var O = ORG, out = [], i, j;
-      out.push('<rect class="land" x="-1200" y="-1200" width="4000" height="4000"/>');
-      // blocks: parks, or buildings split from the block shape
-      for (i = O.I0; i < O.I1; i++) for (j = O.J0; j < O.J1; j++) {
-        var A = O.N(i, j), B = O.N(i + 1, j), C = O.N(i + 1, j + 1), D = O.N(i, j + 1);
-        var blk = shrink([A, B, C, D], 13), cen = bilerp(A, B, C, D, 0.5, 0.5);
-        if ([A, B, C, D, cen].some(function (p) { return O.isWater(p[0], p[1]); })) continue;
-        var r = rnd();
-        if (r < 0.07) {
-          out.push('<polygon class="park" points="' + pts(shrink([A, B, C, D], 12)) + '"/>');
-          for (var t = 0; t < 7; t++) { var tp = bilerp(blk[0], blk[1], blk[2], blk[3], 0.15 + rnd() * 0.7, 0.15 + rnd() * 0.7); out.push('<circle class="tree" cx="' + tp[0].toFixed(0) + '" cy="' + tp[1].toFixed(0) + '" r="' + (5 + rnd() * 6).toFixed(1) + '"/>'); }
-          continue;
-        }
-        if (r < 0.1) { out.push('<polygon class="plaza" points="' + pts(blk) + '"/>'); continue; }
-        var nu = 2 + Math.floor(rnd() * 2), nv = 2 + Math.floor(rnd() * 2);
-        for (var u = 0; u < nu; u++) for (var v = 0; v < nv; v++) {
-          if (rnd() < 0.08) continue; // courtyard
-          var cell = [bilerp(blk[0], blk[1], blk[2], blk[3], u / nu, v / nv), bilerp(blk[0], blk[1], blk[2], blk[3], (u + 1) / nu, v / nv),
-                      bilerp(blk[0], blk[1], blk[2], blk[3], (u + 1) / nu, (v + 1) / nv), bilerp(blk[0], blk[1], blk[2], blk[3], u / nu, (v + 1) / nv)];
-          out.push('<polygon class="' + CLS[Math.floor(rnd() * 4)] + '" points="' + pts(shrink(cell, 2.2)) + '"/>');
-        }
-      }
-      // streets: minor first, then main roads on top
-      var minor = [], major = [];
-      for (i = O.I0; i <= O.I1; i++) for (j = O.J0; j <= O.J1; j++) {
-        var p = O.N(i, j);
-        if (i < O.I1) (O.mainH(j) ? major : minor).push([p, O.N(i + 1, j)]);
-        if (j < O.J1) (O.mainV(i) ? major : minor).push([p, O.N(i, j + 1)]);
-      }
-      minor.forEach(function (e) { out.push('<path class="road-minor" d="' + pathD(e) + '"/>'); });
-      major.forEach(function (e) { out.push('<path class="road-main" d="' + pathD(e) + '"/>'); });
-      // roundabouts on some main crossings
-      for (i = O.I0; i <= O.I1; i += 3) for (j = O.J0; j <= O.J1; j += 3) {
-        var c = O.N(i, j);
-        if (O.isWater(c[0], c[1]) || ((i * 7 + j * 3) % 4)) continue;
-        out.push('<circle class="roundabout" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="26"/>');
-        out.push('<circle class="park" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="13"/>');
-      }
-      // river, then bridges where main roads cross it
-      var L = [], R = [];
-      for (var yy = -1200; yy <= 2800; yy += 16) { L.push([O.riverX(yy) - 66, yy]); R.unshift([O.riverX(yy) + 66, yy]); }
-      out.push(water(L.concat(R)));
-      major.forEach(function (e) { out.push(bridges(e, O.isWater, 260)); });
-      return out.join("");
-    }
-  };
-
-  window.MapLayouts = { grid: grid, city3d: city3d, oldtown: oldtown, metro: metro, organic: organic };
+  window.MapLayouts = { grid: grid, city3d: city3d, oldtown: oldtown, metro: metro };
 })();

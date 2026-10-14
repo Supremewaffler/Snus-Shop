@@ -180,12 +180,6 @@
       '<path class="route-glow" d="' + d + '"/>' +
       '<path class="route-todo" d="' + d + '"/>' +
       '<path id="routeDone" class="route-done" d="' + d + '" stroke-dasharray="0 ' + (TOTAL + 50) + '"/>';
-    if (LAYOUT.routeDots) {
-      ROUTE.forEach(function (p, i) {
-        if (STOP_VERTEX.indexOf(i) >= 0) return;
-        $("routeLayer").insertAdjacentHTML("beforeend", '<circle class="route-dot" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="6"/>');
-      });
-    }
 
     // decorative points of interest, like a game map
     var poiLayer = $("poiLayer");

@@ -105,19 +105,7 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .bridge { fill: var(--bridge); }
 .bridge-edge { fill: none; stroke: var(--rail); stroke-width: 26; opacity: .7; stroke-linecap: butt; }
 .bridge-deck { fill: none; stroke: var(--bridge); stroke-width: 20; stroke-linecap: butt; }
-.road-minor { fill: none; stroke: var(--ave); stroke-width: 9; opacity: calc(var(--ave-o) * .8); stroke-linecap: round; }
-.road-main { fill: none; stroke: var(--ave); stroke-width: 17; opacity: calc(var(--ave-o) * 1.5); stroke-linecap: round; }
-.roundabout { fill: var(--land); stroke: var(--ave); stroke-width: 15; stroke-opacity: calc(var(--ave-o) * 1.5); }
-.route-dot { fill: var(--sea); stroke: var(--r-done); stroke-width: 3.5; }
-.map-wrap[data-layout="organic"] .route-done { stroke-width: 9; }
-.map-wrap[data-layout="organic"] .route-todo { stroke-width: 6; }
-.map-wrap[data-map="day"] .road-minor { stroke: #ffffff; opacity: 1; }
-.side { fill: color-mix(in srgb, var(--side) 55%, #000); }
-/* 3D city: lighter roofs so the buildings stand out from their walls */
-.map-wrap[data-layout="city3d"] .b1 { fill: color-mix(in srgb, var(--b1) 72%, #fff); }
-.map-wrap[data-layout="city3d"] .b2 { fill: color-mix(in srgb, var(--b2) 78%, #fff); }
-.map-wrap[data-layout="city3d"] .b3 { fill: color-mix(in srgb, var(--b3) 82%, #fff); }
-.map-wrap[data-layout="city3d"] .b4 { fill: color-mix(in srgb, var(--b4) 70%, #fff); }
+.side { fill: var(--side); }
 .plaza { fill: var(--plaza); }
 .park-ring { stroke: var(--park); stroke-width: 46; }
 .metro-dot { fill: var(--ave); opacity: .18; }
