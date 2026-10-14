@@ -79,7 +79,9 @@
   // ---------- helpers ----------
   var $ = function (id) { return document.getElementById(id); };
   var lang = (function () {
-    try { var s = localStorage.getItem("trk-lang"); if (s === "pl" || s === "en") return s; } catch (e) {}
+    // Every visit opens in the default language (Polish). Tapping EN only switches the open page.
+    try { localStorage.removeItem("trk-lang"); } catch (e) {}   // forget choices saved by older versions
+    try { var s = sessionStorage.getItem("trk-lang"); if (s === "pl" || s === "en") return s; } catch (e) {}
     return CFG.defaultLang === "en" ? "en" : "pl";
   })();
   var params = new URLSearchParams(location.search);
@@ -944,7 +946,7 @@
   // ---------- boot ----------
   $("langBtn").addEventListener("click", function () {
     lang = lang === "pl" ? "en" : "pl";
-    try { localStorage.setItem("trk-lang", lang); } catch (e) {}
+    try { sessionStorage.setItem("trk-lang", lang); } catch (e) {}
     applyStaticText();
     if (!number) return;
     loadStatuses().then(function () { if (lastData) render(lastData); else refresh(); });
