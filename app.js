@@ -96,7 +96,7 @@
     if (!iso) return "";
     var d = new Date(iso);
     if (isNaN(d)) return iso;
-    return d.toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Warsaw" }); // Polish time, like InPost
   }
   function prettyNumber(n) { return n.replace(/(.{4})/g, "$1 ").trim(); }
   function el(tag, attrs, parent) {
@@ -237,8 +237,8 @@
 
   var STOP_COLORS = ["#ff8a3d", "#b06cff", "#58c8ff", "#4ee08a"];
   function buildPins(dest) {
-    var layer = $("pinLayer");
-    layer.innerHTML = "";
+    var layer = $("pinLayer"), labels = $("labelLayer");
+    layer.innerHTML = ""; labels.innerHTML = "";
     var x = t();
     var names = x.pins.concat([x.destPin[dest]]);
     var icons = [ICONS.warehouse, ICONS.sort, ICONS.depot, dest === "locker" ? ICONS.locker : ICONS.home];
@@ -246,7 +246,8 @@
       var p = ROUTE[v];
       var g = el("g", { "class": "marker pin", id: "stop" + idx, "data-x": p[0], "data-y": p[1] }, layer);
       drawPin(g, STOP_COLORS[idx], icons[idx], idx === 3 ? 1.35 : 1.1);
-      drawLabel(g, names[idx], 18);
+      // names live in a layer above the rider so they are never covered
+      drawLabel(el("g", { "class": "marker", "data-x": p[0], "data-y": p[1] }, labels), names[idx], 18);
     });
   }
 
@@ -375,7 +376,10 @@
     // decorative pins fade out when zoomed out further than the whole-route view
     $("mapWrap").classList.toggle("far", unit > routeUnit * 1.35);
     // The rider always faces right so the logo on the box stays readable.
-    var raw = pointAt(shown.d);
+    // while driving, stop the rider a little short of the next pin so the pin stays visible
+    var d = shown.d;
+    if (nextStop > 0) d = Math.max(STOP_DIST[nextStop - 1], Math.min(d, STOP_DIST[nextStop] - 95 * unit));
+    var raw = pointAt(d);
     var m = $("moped");
     m.setAttribute("data-x", raw[0]);
     m.setAttribute("data-y", raw[1]);
@@ -384,7 +388,7 @@
       if (g === m) p[0] += shown.ox * unit;
       g.setAttribute("transform", "translate(" + p[0] + " " + p[1] + ") scale(" + unit + ")");
     });
-    $("routeDone").setAttribute("stroke-dasharray", shown.d + " " + (TOTAL + 50));
+    $("routeDone").setAttribute("stroke-dasharray", d + " " + (TOTAL + 50));
   }
   function redraw() { last.dirty = true; }
   var routeUnit = 1;
@@ -510,6 +514,7 @@
   //  RENDER
   // =====================================================================
   var placement = null; // {key, since}
+  var nextStop = -1;     // index of the stop the rider is driving towards, or -1 when parked
   function applyStaticText() {
     var x = t();
     document.documentElement.lang = lang;
@@ -537,9 +542,11 @@
       var f = 0.06 + 0.86 * (1 - Math.exp(-1.5 * hours / LEG_HOURS[idx]));
       if (placement.stopped) f = Math.min(f, 0.5);
       want.d = STOP_DIST[idx] + f * (STOP_DIST[idx + 1] - STOP_DIST[idx]);
+      nextStop = idx + 1;
       want.ox = 0;
     } else {
       want.d = STOP_DIST[idx];
+      nextStop = -1;
       want.ox = 66; // park next to the pin rather than on top of it
     }
   }
@@ -649,7 +656,7 @@
     var finished = delivered || /^(returned_to_sender|canceled)$/.test(current);
     $("liveChip").classList.toggle("stale", finished);
     setText("lblLive", finished ? x.done : x.live);
-    setText("checkedAt", new Date().toLocaleTimeString(lang === "pl" ? "pl-PL" : "en-GB", { hour: "2-digit", minute: "2-digit" }));
+    setText("checkedAt", new Date().toLocaleTimeString(lang === "pl" ? "pl-PL" : "en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Warsaw" }));
     document.title = st.title + " · " + CFG.brandName;
     return finished;
   }
