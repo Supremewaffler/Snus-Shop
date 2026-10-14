@@ -272,6 +272,10 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
   border: 4px solid var(--rim);
   box-shadow: 0 12px 22px rgba(0,0,0,.6), inset 0 0 0 5px #0c0c10, inset 0 0 0 7px color-mix(in srgb, var(--rim) 40%, transparent);
 }
+.tin { min-height: 0; overflow: hidden; } /* always a circle, whatever the text */
+.tin-long .tin-flavour { font-size: 6.6cqw; }
+.tin-long .tin-emoji { font-size: 12cqw; }
+.tin-long { gap: 1.5cqw; }
 .tin-brand { font-size: 6.5cqw; font-weight: 900; letter-spacing: .14em; color: var(--rim); }
 .tin-emoji { font-size: 15cqw; line-height: 1.1; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
 .tin-flavour { font-size: 8.5cqw; font-weight: 900; line-height: 1.05; text-transform: uppercase; letter-spacing: .04em; }

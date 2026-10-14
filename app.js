@@ -818,7 +818,7 @@
   function drawTin(p) {
     var l = lineOf(p);
     var tin = document.createElement("div");
-    tin.className = "tin";
+    tin.className = "tin" + (p.name.length > 14 ? " tin-long" : ""); // long names get smaller text
     tin.style.setProperty("--rim", l.rim || "#d9d9de");
     tin.style.setProperty("--tint", p.color || "#555");
     [["tin-brand", l.short || l.name], ["tin-emoji", p.emoji || ""], ["tin-flavour", p.name], ["tin-mg", l.strength]].forEach(function (part) {
