@@ -4,7 +4,8 @@ window.TRACK_CONFIG = {
   refreshSeconds: 60,          // how often the page re-checks InPost
   defaultLang: "pl",           // "pl" or "en"
   mapStyle: "noir",            // "neon", "noir", "night", "day" or "blueprint"
-  mapLayout: "grid",           // "grid", "city3d", "oldtown" or "metro"
+  mapLayout: "grid",           // "grid", "city3d", "oldtown", "metro" or "organic"
+  routeColor: "",              // optional: "red", "cyan", "gold", "green" or "white" (blank = the style's own)
 
   // Instagram account customers are sent to from the flavour carousel.
   instagram: "snus.shop24",

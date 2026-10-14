@@ -180,6 +180,12 @@
       '<path class="route-glow" d="' + d + '"/>' +
       '<path class="route-todo" d="' + d + '"/>' +
       '<path id="routeDone" class="route-done" d="' + d + '" stroke-dasharray="0 ' + (TOTAL + 50) + '"/>';
+    if (LAYOUT.routeDots) {
+      ROUTE.forEach(function (p, i) {
+        if (STOP_VERTEX.indexOf(i) >= 0) return;
+        $("routeLayer").insertAdjacentHTML("beforeend", '<circle class="route-dot" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="6"/>');
+      });
+    }
 
     // decorative points of interest, like a game map
     var poiLayer = $("poiLayer");
@@ -924,6 +930,10 @@
 
   var mapStyle = (params.get("map") || CFG.mapStyle || "neon").toLowerCase();
   $("mapWrap").dataset.map = MAP_STYLES.indexOf(mapStyle) >= 0 ? mapStyle : "neon";
+  // Optional route colour on top of the map style: "red", "cyan", "gold", "green" or "white".
+  var ROUTE_COLORS = { red: "#ff4d4d", cyan: "#4fd8ff", gold: "#ffc857", green: "#3ee08a", white: "#ffffff" };
+  var routeColor = ROUTE_COLORS[(params.get("route") || CFG.routeColor || "").toLowerCase()];
+  if (routeColor) ["--r-done", "--r-todo", "--r-glow"].forEach(function (v) { $("mapWrap").style.setProperty(v, routeColor); });
 
   applyStaticText();
   if (!number) { setupMaker(); return; }
