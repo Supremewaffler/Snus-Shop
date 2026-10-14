@@ -42,7 +42,7 @@ The map can be moved and zoomed within the city's limits:
 - **Phone:** two fingers to move and pinch-zoom. One finger still scrolls the page, and a short tip explains this.
 - **Both:** the + / − buttons zoom in and out.
 
-The map only redraws while something is moving, so an idle page uses almost no battery.
+The map only redraws while something is moving, so an idle page uses almost no battery. While someone is dragging or pinching, the page slides the already-drawn map instead of redrawing it, and redraws once, sharply, when they let go. Decorative pins are hidden when zoomed out past the whole-route view.
 
 ## Map styles
 
@@ -60,7 +60,7 @@ To preview any style without changing the site, add `&map=<style>` to a link, e.
 
 `mapLayout` in `config.js` picks the city's design. All four have the same four stops, and they work with any map style:
 
-- `grid`: avenues, a river and an island coast
+- `grid`: an island city with avenues, a winding river, a harbour bay with piers, a lake, small islands off the coast, and quieter suburbs towards the shore
 - `city3d`: the same city with raised 3D buildings, taller downtown (live)
 - `oldtown`: ring roads around a market square, with a ring park and a river (Kraków-style)
 - `metro`: a transit-map look, with the delivery route as the main line

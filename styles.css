@@ -48,12 +48,14 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 /* Map styles: pick with mapStyle in config.js (or ?map=… to preview). "neon" is the default. */
 .map-wrap {
   --sea: #0a0c2a;
+  --shallow: #12154a; --shallow2: #1a1d5c; --shore: #3b3790;
   --side: #3a3290; --plaza: #2e2878; --land: #241f63; --edge: #3b37a0; --edge-o: .55;
   --b1: #6f63e0; --b2: #7d72ea; --b3: #6257cf; --b4: #8a80f0;
   --park: #2f3488; --tree: #3c46a8; --ave: #9d94ff; --ave-o: .35; --bridge: #4a43b3; --rail: #a69cff;
   --r-done: #ffffff; --r-todo: #e9e6df; --r-glow: #ffffff; --r-glow-o: .16;
 }
 .map-wrap[data-map="noir"] {
+  --shallow: #09090b; --shallow2: #0d0d10; --shore: #232329;
   --side: #18181d; --plaza: #1c1c21;
   --sea: #050506; --land: #111114; --edge: #4a4a52; --edge-o: .7;
   --b1: #2a2a31; --b2: #313139; --b3: #24242a; --b4: #3a3a43;
@@ -61,6 +63,7 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
   --r-done: #f2f0ea; --r-todo: #9d9a92; --r-glow: #ffffff; --r-glow-o: .14;
 }
 .map-wrap[data-map="night"] {
+  --shallow: #061528; --shallow2: #0a1c33; --shore: #1a2a40;
   --side: #0d1726; --plaza: #0f1b2e;
   --sea: #030c18; --land: #0a1424; --edge: #1f4a7a; --edge-o: .7;
   --b1: #18263d; --b2: #1d2e49; --b3: #142135; --b4: #f0a53a;
@@ -69,6 +72,7 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 }
 .map-wrap[data-map="night"] .b4 { opacity: .55; }
 .map-wrap[data-map="day"] {
+  --shallow: #a9dcff; --shallow2: #c2e7ff; --shore: #efe2b8;
   --side: #cbc3b2; --plaza: #f8f3e7;
   --sea: #8fd3ff; --land: #efe9dc; --edge: #ffffff; --edge-o: .9;
   --b1: #ffffff; --b2: #f8f5ef; --b3: #e9e3d6; --b4: #dfd8c9;
@@ -76,14 +80,15 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
   --r-done: #1a73e8; --r-todo: #1a73e8; --r-glow: #1a73e8; --r-glow-o: .18;
 }
 .map-wrap[data-map="blueprint"] {
+  --shallow: #0d3762; --shallow2: #11406f; --shore: #3b74ad;
   --side: #0d3d6f; --plaza: #134b83;
   --sea: #0a2c52; --land: #0f3f73; --edge: #cfe8ff; --edge-o: .5;
   --b1: #16599a; --b2: #1a63a8; --b3: #134f8a; --b4: #1f6db8;
   --park: #0f4a6e; --tree: #17618c; --ave: #e6f3ff; --ave-o: .45; --bridge: #1a5c99; --rail: #e6f3ff;
   --r-done: #ffffff; --r-todo: #bfe0ff; --r-glow: #ffffff; --r-glow-o: .18;
 }
-.map-wrap { position: relative; height: min(68vh, 560px); min-height: 380px; background: var(--sea); }
-#map { display: block; width: 100%; height: 100%; cursor: grab; user-select: none; -webkit-user-select: none; }
+.map-wrap { position: relative; height: min(68vh, 560px); min-height: 380px; background: var(--sea); overflow: hidden; }
+#map { display: block; width: 100%; height: 100%; transform-origin: 0 0; will-change: transform; cursor: grab; user-select: none; -webkit-user-select: none; }
 .map-wrap.dragging #map { cursor: grabbing; }
 #city rect { shape-rendering: crispEdges; }
 .zoom-btns { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; }
@@ -97,6 +102,11 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 #sea { fill: var(--sea); }
 .land { fill: var(--land); }
 .water { fill: var(--sea); }
+.shallow { fill: var(--shallow); }
+.shallow2 { fill: var(--shallow2); }
+.shore { fill: var(--shore); }
+.river-bank { fill: var(--shore); }
+.pier { fill: none; stroke: var(--shore); stroke-width: 12; stroke-linecap: butt; }
 .water-edge { fill: none; stroke: var(--edge); stroke-width: 3; opacity: var(--edge-o); }
 .b1 { fill: var(--b1); } .b2 { fill: var(--b2); } .b3 { fill: var(--b3); } .b4 { fill: var(--b4); }
 .park { fill: var(--park); }
@@ -130,7 +140,8 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .pin .ring { fill: none; stroke: currentColor; stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: center; }
 .pin.target .ring { animation: ring 1.8s ease-out infinite; }
 @keyframes ring { 0% { opacity: .8; transform: scale(.5); } 100% { opacity: 0; transform: scale(1.8); } }
-.poi { opacity: .9; }
+.poi { opacity: .9; transition: opacity .3s; }
+.map-wrap.far .poi { opacity: 0; pointer-events: none; }
 
 /* Moped marker */
 .moped-pulse { fill: #ffffff; opacity: .3; transform-box: fill-box; transform-origin: center; animation: pulse 1.6s ease-out infinite; }

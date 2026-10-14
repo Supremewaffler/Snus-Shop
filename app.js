@@ -188,7 +188,8 @@
     var colors = ["#4ee08a", "#5ef2ff", "#b06cff", "#ff8a3d", "#ff4f7a", "#58c8ff"];
     var placed = 0, tries = 0, pois = [];
     var maxPois = LAYOUT.pois == null ? 18 : LAYOUT.pois;
-    while (placed < maxPois && tries++ < 600) {
+    var tryLimit = maxPois * 40;
+    while (placed < maxPois && tries++ < tryLimit) {
       var pt = LAYOUT.randPoint(rnd), px = pt[0], py = pt[1];
       if (LAYOUT.isWater(px, py) || LAYOUT.isWater(px + 40, py) || LAYOUT.isWater(px - 40, py) || LAYOUT.isWater(px, py + 40) || LAYOUT.isWater(px, py - 40)) continue;
       var near = false;
@@ -291,6 +292,7 @@
   // Camera modes: "follow" the moped, show the whole "route", or "free" after the user moves the map.
   var mode = "route";
   function setMode(m) {
+    if (m !== "free") endGesture();
     mode = m;
     follow = m === "follow";
     $("btnFollow").classList.toggle("on", m === "follow");
@@ -303,10 +305,10 @@
   function mapSize() { var w = $("mapWrap"); return [w.clientWidth || 1, w.clientHeight || 1]; }
   function clampBox(b) {
     var sz = mapSize(), rv = routeView();
-    var minW = sz[0] * 0.3, maxW = rv.w * 1.4;
+    var minW = sz[0] * 0.3, maxW = rv.w * 2.8; // zoom out far enough to see the whole island
     var w = Math.max(minW, Math.min(maxW, b.w)), h = w * sz[1] / sz[0];
     var cx = b.x + b.w / 2, cy = b.y + b.h / 2;
-    var rcx = rv.x + rv.w / 2, rcy = rv.y + rv.h / 2, slackX = rv.w * 0.45, slackY = rv.h * 0.45;
+    var rcx = rv.x + rv.w / 2, rcy = rv.y + rv.h / 2, slackX = rv.w * 1.25, slackY = rv.h * 1.25;
     cx = Math.max(rcx - slackX, Math.min(rcx + slackX, cx));
     cy = Math.max(rcy - slackY, Math.min(rcy + slackY, cy));
     return { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
@@ -318,12 +320,26 @@
     var w = b.w / f, u2 = w / sz[0];
     return { x: wx - px * u2, y: wy - py * u2, w: w, h: w * sz[1] / sz[0] };
   }
-  function moveCam(box) {           // immediate, for drags and pinches
-    setMode("free");
-    cam = clampBox(box);
-    camTarget = null;
+  // While a finger or mouse is moving the map, slide the already-drawn picture with a CSS
+  // transform (cheap, done by the graphics chip) and only redraw the city when the gesture ends.
+  var gesture = null, gestureTimer = null;
+  function moveCam(box) {
+    if (!gesture) { setMode("free"); camTarget = null; gesture = { start: Object.assign({}, cam), cur: Object.assign({}, cam) }; }
+    gesture.cur = clampBox(box);
+    var u = gesture.cur.w / mapSize()[0], k = gesture.start.w / gesture.cur.w;
+    $("map").style.transform = "translate(" + ((gesture.start.x - gesture.cur.x) / u) + "px," + ((gesture.start.y - gesture.cur.y) / u) + "px) scale(" + k + ")";
   }
+  function endGesture() {
+    clearTimeout(gestureTimer);
+    if (!gesture) return;
+    cam = gesture.cur;
+    gesture = null;
+    writeFrame();                     // redraw at the new position, then drop the temporary slide
+    $("map").style.transform = "";
+  }
+  function liveCam() { return gesture ? gesture.cur : cam; }
   function zoomButton(f) {          // animated, for the +/- buttons
+    endGesture();
     var base = camTarget || cam, sz = mapSize();
     setMode("free");
     camTarget = clampBox(zoomBox(base, f, sz[0] / 2, sz[1] / 2));
@@ -348,25 +364,31 @@
     // Only touch the DOM when something actually moved, so an idle map costs nothing.
     var W = $("mapWrap").clientWidth || 1;
     if (cam.x !== last.x || cam.y !== last.y || cam.w !== last.w || cam.h !== last.h ||
-        shown.d !== last.d || shown.ox !== last.ox || W !== last.W || ANGLE !== last.A || last.dirty) {
-      last = { x: cam.x, y: cam.y, w: cam.w, h: cam.h, d: shown.d, ox: shown.ox, W: W, A: ANGLE };
-      $("map").setAttribute("viewBox", cam.x + " " + cam.y + " " + cam.w + " " + cam.h);
-      var unit = cam.w / W;
-      // The rider always faces right so the logo on the box stays readable.
-      var raw = pointAt(shown.d);
-      var m = $("moped");
-      m.setAttribute("data-x", raw[0]);
-      m.setAttribute("data-y", raw[1]);
-      document.querySelectorAll("#map .marker").forEach(function (g) {
-        var p = rot([+g.getAttribute("data-x"), +g.getAttribute("data-y")]);
-        if (g === m) p[0] += shown.ox * unit;
-        g.setAttribute("transform", "translate(" + p[0] + " " + p[1] + ") scale(" + unit + ")");
-      });
-      $("routeDone").setAttribute("stroke-dasharray", shown.d + " " + (TOTAL + 50));
-    }
+        shown.d !== last.d || shown.ox !== last.ox || W !== last.W || ANGLE !== last.A || last.dirty) writeFrame();
     requestAnimationFrame(tick);
   }
+  function writeFrame() {
+    var W = $("mapWrap").clientWidth || 1;
+    last = { x: cam.x, y: cam.y, w: cam.w, h: cam.h, d: shown.d, ox: shown.ox, W: W, A: ANGLE };
+    $("map").setAttribute("viewBox", cam.x + " " + cam.y + " " + cam.w + " " + cam.h);
+    var unit = cam.w / W;
+    // decorative pins fade out when zoomed out further than the whole-route view
+    $("mapWrap").classList.toggle("far", unit > routeUnit * 1.35);
+    // The rider always faces right so the logo on the box stays readable.
+    var raw = pointAt(shown.d);
+    var m = $("moped");
+    m.setAttribute("data-x", raw[0]);
+    m.setAttribute("data-y", raw[1]);
+    document.querySelectorAll("#map .marker").forEach(function (g) {
+      var p = rot([+g.getAttribute("data-x"), +g.getAttribute("data-y")]);
+      if (g === m) p[0] += shown.ox * unit;
+      g.setAttribute("transform", "translate(" + p[0] + " " + p[1] + ") scale(" + unit + ")");
+    });
+    $("routeDone").setAttribute("stroke-dasharray", shown.d + " " + (TOTAL + 50));
+  }
   function redraw() { last.dirty = true; }
+  var routeUnit = 1;
+  function measureRouteUnit() { routeUnit = routeView().w / mapSize()[0]; }
 
   // ---------- map gestures ----------
   // Mouse: drag to pan, wheel to zoom, double-click to zoom in.
@@ -377,7 +399,7 @@
     var drag = null;
     svg.addEventListener("mousedown", function (e) {
       if (e.button !== 0) return;
-      drag = { p: local(e), box: Object.assign({}, cam) };
+      drag = { p: local(e), box: Object.assign({}, liveCam()) };
       wrap.classList.add("dragging");
       e.preventDefault();
     });
@@ -386,14 +408,17 @@
       var p = local(e), unit = drag.box.w / mapSize()[0];
       moveCam({ x: drag.box.x - (p[0] - drag.p[0]) * unit, y: drag.box.y - (p[1] - drag.p[1]) * unit, w: drag.box.w, h: drag.box.h });
     });
-    window.addEventListener("mouseup", function () { drag = null; wrap.classList.remove("dragging"); });
+    window.addEventListener("mouseup", function () { if (drag) endGesture(); drag = null; wrap.classList.remove("dragging"); });
     svg.addEventListener("wheel", function (e) {
       e.preventDefault();
       var p = local(e);
-      moveCam(zoomBox(cam, Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0015)), p[0], p[1]));
+      moveCam(zoomBox(liveCam(), Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0015)), p[0], p[1]));
+      clearTimeout(gestureTimer);
+      gestureTimer = setTimeout(endGesture, 160);
     }, { passive: false });
     svg.addEventListener("dblclick", function (e) {
       var p = local(e);
+      endGesture();
       setMode("free");
       camTarget = clampBox(zoomBox(cam, 1.8, p[0], p[1]));
     });
@@ -403,7 +428,7 @@
     function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
     svg.addEventListener("touchstart", function (e) {
       if (e.touches.length === 2) {
-        pinch = { m: mid(e.touches), d: dist(e.touches), box: Object.assign({}, cam) };
+        pinch = { m: mid(e.touches), d: dist(e.touches), box: Object.assign({}, liveCam()) };
         e.preventDefault();
       } else if (e.touches.length === 1) {
         oneStart = [e.touches[0].clientX, e.touches[0].clientY];
@@ -426,7 +451,7 @@
         }
       }
     }, { passive: false });
-    svg.addEventListener("touchend", function (e) { if (e.touches.length < 2) pinch = null; });
+    svg.addEventListener("touchend", function (e) { if (e.touches.length < 2) { if (pinch) endGesture(); pinch = null; } });
 
     $("btnZoomIn").addEventListener("click", function () { zoomButton(1.6); });
     $("btnZoomOut").addEventListener("click", function () { zoomButton(1 / 1.6); });
@@ -459,6 +484,7 @@
   function initMap(dest) {
     if (!mapReady) {
       ANGLE = bestAngle();
+      measureRouteUnit();
       buildCity(number || "x");
       setAngle();
       mapReady = true;
@@ -914,6 +940,7 @@
   window.addEventListener("resize", function () {
     if (!mapReady) return;
     setAngle();
+    measureRouteUnit();
     if (mode === "free") cam = clampBox(cam); else camTarget = follow ? followView() : routeView();
     redraw();
   });

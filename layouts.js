@@ -59,17 +59,46 @@
   //  GRID — avenues, a river and an island coast (the original map)
   // ===================================================================
   var GRID = 44, AVE = 132;
-  function riverX(y) { return 820 + 55 * Math.sin(y / 190); }
-  function coastX(y) { return -180 + 40 * Math.sin(y / 150); }
-  function southY(x) { return 1560 + 40 * Math.sin(x / 170); }
-  function eastX(y) { return 1660 + 45 * Math.sin(y / 160); }
-  function northY(x) { return -520 + 35 * Math.sin(x / 140); }
-  function gridWater(x, y) {
-    return Math.abs(x - riverX(y)) < 62 || x < coastX(y) || y > southY(x) || x > eastX(y) || y < northY(x);
+
+  // --- the island: an irregular coastline drawn around (700, 640) ---------------------
+  var IC = [700, 640], IRY = 0.95;
+  function angDiff(a, b) { var d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
+  function bump(t, at, width, size) { var d = angDiff(t, at) / width; return size * Math.exp(-d * d); }
+  function coastR(t) {
+    var r = 1650 * (1 + 0.06 * Math.sin(3 * t + 0.5) + 0.04 * Math.sin(5 * t + 1.7) + 0.025 * Math.sin(9 * t + 0.3)
+                      + 0.013 * Math.sin(17 * t + 2.1) + 0.007 * Math.sin(31 * t + 0.9) + 0.004 * Math.sin(53 * t + 1.1));
+    return r - bump(t, 0.12, 0.17, 340)   // harbour bay (east)
+             - bump(t, 2.45, 0.12, 230)   // south-west bay
+             - bump(t, 4.35, 0.09, 170)   // small north cove
+             + bump(t, 5.55, 0.08, 190)   // headland (north-east)
+             + bump(t, 3.3, 0.1, 120);    // west point
   }
+  function polarOf(x, y) { var dx = x - IC[0], dy = (y - IC[1]) / IRY; return [Math.atan2(dy, dx), Math.hypot(dx, dy)]; }
+  function coastPoint(t, extra) { var r = coastR(t) + (extra || 0); return [IC[0] + r * Math.cos(t), IC[1] + r * IRY * Math.sin(t)]; }
+  function inSea(x, y, margin) { var p = polarOf(x, y); return p[1] > coastR(p[0]) - (margin || 0); }
+  function outline(extra) { var o = []; for (var k = 0; k < 720; k++) o.push(coastPoint(k / 720 * 2 * Math.PI, extra)); return o; }
+  // small islands off the coast: centre, radius
+  var ISLETS = [[2560, 760, 110], [2380, 1240, 60], [-1120, 260, 95], [-980, 1880, 70], [1480, -1080, 80]];
+  function isletR(k, t) { return ISLETS[k][2] * (1 + 0.18 * Math.sin(3 * t + k) + 0.1 * Math.sin(7 * t + 2 * k)); }
+
+  // --- the river: winding, changing width, widening towards its mouths --------------
+  function riverX(y) { return 820 + 55 * Math.sin(y / 190) + 18 * Math.sin(y / 71 + 1.3); }
+  function riverHalf(y) {
+    var w = 50 + 15 * Math.sin(y / 240 + 0.7) + 7 * Math.sin(y / 53);
+    var far = Math.abs(y - IC[1]) - 1250;
+    return far > 0 ? w + far * 0.35 : w;
+  }
+  function inRiver(x, y, margin) { return Math.abs(x - riverX(y)) < riverHalf(y) + (margin || 0); }
+  // a lake in the west park
+  var LAKE = [-200, 920, 95, 62];
+  function inLake(x, y, margin) { var dx = (x - LAKE[0]) / (LAKE[2] + (margin || 0)), dy = (y - LAKE[1]) / (LAKE[3] + (margin || 0)); return dx * dx + dy * dy < 1; }
+
+  function gridWater(x, y) { return inSea(x, y) || inRiver(x, y) || inLake(x, y); }
+  function nearWater(x, y, m) { return inSea(x, y, m) || inRiver(x, y, m) || inLake(x, y, m); }
+
   function gridParks(rnd) {
-    var parks = [[5, 1, 3, 3]];
-    for (var p = 0; p < 7; p++) parks.push([Math.floor(rnd() * 34) - 6, Math.floor(rnd() * 34) - 6, 1 + Math.floor(rnd() * 3), 1 + Math.floor(rnd() * 3)]);
+    var parks = [[5, 1, 3, 3], [-3, 6, 3, 2]];
+    for (var p = 0; p < 14; p++) parks.push([Math.floor(rnd() * 34) - 12, Math.floor(rnd() * 32) - 12, 1 + Math.floor(rnd() * 3), 1 + Math.floor(rnd() * 3)]);
     return parks;
   }
   function inPark(parks, i, j) {
@@ -79,59 +108,106 @@
     }
     return false;
   }
+  // how far out from the centre a point is (0 = centre, 1 = coast); the edges become quieter suburbs
+  function outskirts(x, y) { var p = polarOf(x, y); return p[1] / coastR(p[0]); }
+
   function gridGround(rnd, parks, out) {
-    out.push('<rect class="land" x="-800" y="-800" width="3000" height="3000"/>');
-    for (var a = -6; a <= 16; a++) {
-      out.push('<line class="avenue" x1="' + a * AVE + '" y1="-800" x2="' + a * AVE + '" y2="2200"/>');
-      out.push('<line class="avenue" x1="-800" y1="' + a * AVE + '" x2="2200" y2="' + a * AVE + '"/>');
+    var land = pts(outline(0));
+    out.push('<defs><clipPath id="landClip"><polygon points="' + land + '"/></clipPath></defs>');
+    out.push('<polygon class="shallow" points="' + pts(outline(60)) + '"/>');
+    out.push('<polygon class="shallow2" points="' + pts(outline(26)) + '"/>');
+    out.push('<polygon class="shore" points="' + pts(outline(9)) + '"/>');
+    out.push('<polygon class="land" points="' + land + '"/>');
+    ISLETS.forEach(function (c, k) {
+      var sh = [], ld = [];
+      for (var q = 0; q < 48; q++) { var t = q / 48 * 2 * Math.PI, r = isletR(k, t); sh.push([c[0] + (r + 24) * Math.cos(t), c[1] + (r + 24) * Math.sin(t)]); ld.push([c[0] + r * Math.cos(t), c[1] + r * Math.sin(t)]); }
+      out.push('<polygon class="shallow" points="' + pts(sh) + '"/><polygon class="shore" points="' + pts(ld.map(function (p) { return [c[0] + (p[0] - c[0]) * 1.06, c[1] + (p[1] - c[1]) * 1.06]; })) + '"/><polygon class="park" points="' + pts(ld) + '"/>');
+      for (var n = 0; n < c[2] / 6; n++) { var tt = rnd() * 2 * Math.PI, rr = rnd() * c[2] * 0.75; out.push('<circle class="tree" cx="' + (c[0] + rr * Math.cos(tt)).toFixed(0) + '" cy="' + (c[1] + rr * Math.sin(tt)).toFixed(0) + '" r="' + (5 + rnd() * 6).toFixed(1) + '"/>'); }
+    });
+    out.push('<g clip-path="url(#landClip)">');
+    for (var a = -14; a <= 24; a++) {
+      out.push('<line class="avenue" x1="' + a * AVE + '" y1="-1600" x2="' + a * AVE + '" y2="3000"/>');
+      out.push('<line class="avenue" x1="-1600" y1="' + a * AVE + '" x2="3000" y2="' + a * AVE + '"/>');
     }
     parks.forEach(function (q) {
       out.push('<rect class="park" x="' + (q[0] * AVE + 4) + '" y="' + (q[1] * AVE + 4) + '" width="' + (q[2] * AVE - 8) + '" height="' + (q[3] * AVE - 8) + '" rx="6"/>');
       for (var n = 0; n < q[2] * q[3] * 9; n++) {
-        out.push('<circle class="tree" cx="' + (q[0] * AVE + 12 + rnd() * (q[2] * AVE - 24)).toFixed(0) + '" cy="' + (q[1] * AVE + 12 + rnd() * (q[3] * AVE - 24)).toFixed(0) + '" r="' + (4 + rnd() * 6).toFixed(1) + '"/>');
+        var tx = q[0] * AVE + 12 + rnd() * (q[2] * AVE - 24), ty = q[1] * AVE + 12 + rnd() * (q[3] * AVE - 24);
+        if (!inLake(tx, ty, 10)) out.push('<circle class="tree" cx="' + tx.toFixed(0) + '" cy="' + ty.toFixed(0) + '" r="' + (4 + rnd() * 6).toFixed(1) + '"/>');
       }
     });
+    // trees along the shore
+    for (var s2 = 0; s2 < 260; s2++) {
+      var tp = coastPoint(rnd() * 2 * Math.PI, -(22 + rnd() * 60));
+      if (!inRiver(tp[0], tp[1], 10)) out.push('<circle class="tree" cx="' + tp[0].toFixed(0) + '" cy="' + tp[1].toFixed(0) + '" r="' + (4 + rnd() * 6).toFixed(1) + '"/>');
+    }
+    out.push('</g>');
   }
   function gridWaterShapes(out) {
-    var L = [], R = [], yy, xx;
-    for (yy = -900; yy <= 2300; yy += 20) { L.push([riverX(yy) - 62, yy]); R.unshift([riverX(yy) + 62, yy]); }
-    var west = [[-3000, -900]], south = [[-900, 3000]], east = [[3000, -900]], north = [[-900, -3000]];
-    for (yy = -900; yy <= 2300; yy += 20) { west.push([coastX(yy), yy]); east.push([eastX(yy), yy]); }
-    for (xx = -900; xx <= 2300; xx += 20) { south.push([xx, southY(xx)]); north.push([xx, northY(xx)]); }
-    west.push([-3000, 2300]); south.push([2300, 3000]); east.push([3000, 2300]); north.push([2300, -3000]);
-    [L.concat(R), west, south, east, north].forEach(function (w) { out.push(water(w)); });
-    [264, 660, 1188].forEach(function (by) {
-      out.push(bridges([[riverX(by) - 120, by], [riverX(by) + 120, by]], gridWater, 400));
+    var L = [], R = [], L2 = [], R2 = [], yy;
+    for (yy = -1700; yy <= 3000; yy += 14) {
+      var c = riverX(yy), h = riverHalf(yy);
+      L.push([c - h, yy]); R.unshift([c + h, yy]);
+      L2.push([c - h * 0.62, yy]); R2.unshift([c + h * 0.62, yy]);
+    }
+    out.push('<polygon class="river-bank" points="' + pts(L.map(function (p) { return [p[0] - 7, p[1]]; }).concat(R.map(function (p) { return [p[0] + 7, p[1]]; }))) + '"/>');
+    out.push('<polygon class="shallow2" points="' + pts(L.concat(R)) + '"/>');
+    out.push('<polygon class="water" points="' + pts(L2.concat(R2)) + '"/>');
+    // lake
+    var lk = [], lk2 = [];
+    for (var q = 0; q < 40; q++) {
+      var t = q / 40 * 2 * Math.PI, w = 1 + 0.08 * Math.sin(3 * t) + 0.05 * Math.sin(5 * t + 1);
+      lk.push([LAKE[0] + LAKE[2] * w * Math.cos(t), LAKE[1] + LAKE[3] * w * Math.sin(t)]);
+      lk2.push([LAKE[0] + LAKE[2] * w * 0.7 * Math.cos(t), LAKE[1] + LAKE[3] * w * 0.7 * Math.sin(t)]);
+    }
+    out.push('<polygon class="shore" points="' + pts(lk.map(function (p) { return [LAKE[0] + (p[0] - LAKE[0]) * 1.08, LAKE[1] + (p[1] - LAKE[1]) * 1.1]; })) + '"/><polygon class="shallow2" points="' + pts(lk) + '"/><polygon class="water" points="' + pts(lk2) + '"/>');
+    // bridges over the river (the route uses the y=660 one)
+    [-792, -264, 264, 660, 1188, 1716].forEach(function (by) {
+      out.push(bridges([[riverX(by) - 220, by], [riverX(by) + 220, by]], function (x, y) { return inRiver(x, y); }, 400));
     });
+    // harbour piers in the east bay
+    for (var k = -2; k <= 2; k++) {
+      var t0 = 0.12 + k * 0.045, a = coastPoint(t0, -4), b2 = coastPoint(t0, 95 + Math.abs(k) * -12);
+      out.push('<path class="pier" d="' + pathD([a, b2]) + '"/>');
+    }
   }
-  // Each city block split into 1, 2 or 4 buildings.
+  // Each city block split into 1, 2 or 4 buildings; towards the coast, fewer and smaller (suburbs).
   function gridBuildings(rnd, parks, each, splitMore) {
     var gap = 7;
-    for (var i = -14; i < 40; i++) {
-      for (var j = -14; j < 40; j++) {
-        var x = i * GRID, y = j * GRID, cxm = x + GRID / 2;
+    function ok(x, y, w, h) { return !(nearWater(x, y, 9) || nearWater(x + w, y, 9) || nearWater(x, y + h, 9) || nearWater(x + w, y + h, 9)); }
+    for (var i = -42; i < 66; i++) {
+      for (var j = -40; j < 62; j++) {
+        var x = i * GRID, y = j * GRID, cx = x + GRID / 2, cy = y + GRID / 2;
+        if (inSea(cx, cy, -30) || inRiver(cx, cy, -10)) continue;
         if (inPark(parks, i, j)) continue;
-        if (Math.abs(cxm - riverX(y + GRID / 2)) < 62 + GRID / 2) continue;
-        if (x < coastX(y) || y + GRID > southY(cxm) || x + GRID > eastX(y + GRID / 2) || y < northY(cxm)) continue;
-        var bx = x + gap / 2, by = y + gap / 2, s = GRID - gap, r = rnd();
-        if (r < 0.35) each(bx, by, s, s);
+        var o = outskirts(cx, cy), bx = x + gap / 2, by = y + gap / 2, s = GRID - gap, r = rnd();
+        if (o > 0.7) {                                  // suburbs: a house or two, or nothing
+          if (r < 0.16 + (o - 0.7) * 1.1) continue;
+          var hw = s * (0.55 + rnd() * 0.3), hh = s * (0.5 + rnd() * 0.3);
+          var hx = bx + rnd() * (s - hw), hy = by + rnd() * (s - hh);
+          if (ok(hx, hy, hw, hh)) each(hx, hy, hw, hh, true);
+          continue;
+        }
+        if (r < 0.35) { if (ok(bx, by, s, s)) each(bx, by, s, s, false); }
         else if (r < 0.7 || !splitMore) {
           var w = Math.round(s * (0.35 + rnd() * 0.3));
-          each(bx, by, w - 1, s); each(bx + w + 1, by, s - w - 1, s);
+          if (ok(bx, by, w - 1, s)) each(bx, by, w - 1, s, false);
+          if (ok(bx + w + 1, by, s - w - 1, s)) each(bx + w + 1, by, s - w - 1, s, false);
         } else {
           var h2 = s / 2;
-          each(bx, by, h2 - 1, h2 - 1); each(bx + h2 + 1, by, h2 - 1, h2 - 1);
-          each(bx, by + h2 + 1, h2 - 1, h2 - 1); each(bx + h2 + 1, by + h2 + 1, h2 - 1, h2 - 1);
+          [[bx, by], [bx + h2 + 1, by], [bx, by + h2 + 1], [bx + h2 + 1, by + h2 + 1]].forEach(function (p) {
+            if (ok(p[0], p[1], h2 - 1, h2 - 1)) each(p[0], p[1], h2 - 1, h2 - 1, false);
+          });
         }
       }
     }
   }
   var CLS = ["b1", "b2", "b3", "b4"];
   var GRID_ROUTE = [[264, 396], [528, 396], [528, 660], [1056, 660], [1188, 660], [1188, 1056]];
-  function gridRand(rnd) { return [-300 + rnd() * 1900, -300 + rnd() * 1800]; }
+  function gridRand(rnd) { var p = coastPoint(rnd() * 2 * Math.PI, 0); var f = Math.sqrt(rnd()) * 0.85; return [IC[0] + (p[0] - IC[0]) * f, IC[1] + (p[1] - IC[1]) * f]; }
 
   var grid = {
-    route: GRID_ROUTE, stops: [0, 2, 3, 5], angles: [-12, 38],
+    route: GRID_ROUTE, stops: [0, 2, 3, 5], angles: [-12, 38], pois: 26,
     isWater: gridWater, randPoint: gridRand,
     build: function (rnd) {
       var out = [], parks = gridParks(rnd);
@@ -148,7 +224,7 @@
   //  CITY 3D — the grid city with raised buildings, taller downtown
   // ===================================================================
   var city3d = {
-    route: GRID_ROUTE, stops: [0, 2, 3, 5], angles: [-12, 38], dependsOnAngle: true,
+    route: GRID_ROUTE, stops: [0, 2, 3, 5], angles: [-12, 38], dependsOnAngle: true, pois: 34,
     isWater: gridWater, randPoint: gridRand,
     build: function (rnd, ctx) {
       var out = [], parks = gridParks(rnd), list = [];
@@ -157,10 +233,10 @@
       var a = ctx.angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
       // "up" on screen (tilted a little to the right) expressed in map coordinates
       var ux = 0.3 * ca - sa, uy = -0.3 * sa - ca;
-      gridBuildings(rnd, parks, function (x, y, w, h) {
+      gridBuildings(rnd, parks, function (x, y, w, h, suburb) {
         var d = Math.hypot(x - 760, y - 640);
-        var H = 4 + rnd() * 9 + Math.max(0, 52 - d / 13) * (0.4 + rnd() * 0.6);
-        if (rnd() < 0.025) H += 30 + rnd() * 30;
+        var H = suburb ? 3 + rnd() * 4 : 4 + rnd() * 9 + Math.max(0, 52 - d / 13) * (0.4 + rnd() * 0.6);
+        if (!suburb && rnd() < 0.025) H += 30 + rnd() * 30;
         var key = (x + w / 2 - CX) * sa + (y + h / 2 - CY) * ca;
         list.push({ x: x, y: y, w: w, h: h, H: H, key: key, cls: CLS[Math.floor(rnd() * 4)] });
       }, false);
