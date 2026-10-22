@@ -29,6 +29,8 @@
       },
       errTitle: "Jeszcze nie ruszyliśmy", errNotFound: "InPost nie ma jeszcze informacji o tej przesyłce. Zwykle pojawiają się kilka godzin po nadaniu — strona sama się odświeży.",
       errNet: "Nie udało się połączyć z InPost. Spróbujemy ponownie za chwilę.", errBad: "Ten link wygląda na niepełny. Poproś sprzedawcę o nowy.",
+      menuTitle: "Menu", menuText: "Wybierz smak i kliknij „Zamów” — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.",
+      menuBtn: "Menu", menuCopy: "Kopiuj link do menu", menuCopied: "Link do menu skopiowany",
       mkTitle: "Utwórz link śledzenia", mkText: "Wklej numer przesyłki InPost. Otrzymasz link, który możesz wysłać klientowi.",
       mkBtn: "Utwórz link", mkCopy: "Kopiuj", mkCopied: "Skopiowano!", mkOpen: "Podgląd ↗", mkDemo: "Chcesz zobaczyć, jak to wygląda?",
       mkPh: "np. 6800 1234 5678 9012 3456 7890", demo: "Tryb demo — kliknij etap:"
@@ -55,6 +57,8 @@
       },
       errTitle: "Not on the road yet", errNotFound: "InPost has no information about this parcel yet. It usually appears a few hours after it is sent — this page refreshes by itself.",
       errNet: "Couldn't reach InPost. Trying again shortly.", errBad: "This link looks incomplete. Ask the seller for a new one.",
+      menuTitle: "Menu", menuText: "Pick a flavour and tap “Order” — the message is copied for you and Instagram opens the chat. Paste it and send.",
+      menuBtn: "Menu", menuCopy: "Copy menu link", menuCopied: "Menu link copied",
       mkTitle: "Create a tracking link", mkText: "Paste an InPost tracking number to get a link you can send to the customer.",
       mkBtn: "Create link", mkCopy: "Copy", mkCopied: "Copied!", mkOpen: "Preview ↗", mkDemo: "Want to see what it looks like?",
       mkPh: "e.g. 6800 1234 5678 9012 3456 7890", demo: "Demo mode — tap a stage:"
@@ -88,6 +92,9 @@
   var MAP_STYLES = ["neon", "noir", "night", "day", "blueprint"];
   var number = (params.get("p") || params.get("n") || "").replace(/[^0-9A-Za-z]/g, "");
   var isDemo = number.toLowerCase() === "demo";
+  // the menu: snusshop.pl/menu (or ?menu for testing)
+  var isMenu = !number && (params.has("menu") || /^\/menu\/?$/.test(location.pathname));
+  var MENU_URL = location.origin + "/menu";
   var statusDict = {};
   var lastData = null;
   var timer = null;
@@ -544,6 +551,7 @@
     setText("destMap", x.map);
     setText("mkTitle", x.mkTitle); setText("mkText", x.mkText); setText("mkBtn", x.mkBtn); setText("mkCopy", x.mkCopy);
     setText("mkOpen", x.mkOpen); setText("mkDemo", x.mkDemo); $("mkInput").placeholder = x.mkPh;
+    setText("menuTitle", x.menuTitle); setText("menuText", x.menuText); setText("lblMenuBtn", x.menuBtn); setText("lblMenuCopy", x.menuCopy);
   }
 
   // Where along the route the moped should be right now.
@@ -683,7 +691,7 @@
     show("errorView");
   }
   function show(id) {
-    ["trackView", "errorView", "makeView"].forEach(function (v) { $(v).hidden = v !== id; });
+    ["trackView", "errorView", "makeView", "menuView"].forEach(function (v) { $(v).hidden = v !== id; });
   }
 
   // ---------- data ----------
@@ -937,8 +945,23 @@
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 3500);
   }
 
+  // ---------- menu page ----------
+  function setupMenu() {
+    show("menuView");
+    Array.prototype.forEach.call(document.querySelectorAll("#menuView img[data-src]"), function (img) { img.src = img.getAttribute("data-src"); });
+    var shop = $("shopCard");
+    $("menuView").appendChild(shop);         // same flavour section as on the tracking page
+    shop.hidden = false;
+    setupShop();
+    document.title = t().menuTitle + " · " + CFG.brandName;
+  }
+
   // ---------- link maker ----------
   function setupMaker() {
+    $("mkMenuCopy").addEventListener("click", function () {
+      copyText(MENU_URL);
+      toast(t().menuCopied);
+    });
     show("makeView");
     emit("makerReady", {});
     Array.prototype.forEach.call(document.querySelectorAll("#makeView img[data-src]"), function (img) { img.src = img.getAttribute("data-src"); });
@@ -1027,6 +1050,7 @@
   if (routeColor) ["--r-done", "--r-todo", "--r-glow"].forEach(function (v) { $("mapWrap").style.setProperty(v, routeColor); });
 
   applyStaticText();
+  if (isMenu) { setupMenu(); return; }
   if (!number) { setupMaker(); return; }
   if (number.length < 6 && !isDemo) { showError("bad"); return; }
   if (isDemo) buildDemoBar();

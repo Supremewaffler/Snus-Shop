@@ -11,6 +11,13 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://api-shipx-pl.easypack24.net" crossorigin>
 <link rel="preload" as="image" href="assets/rider.webp">
+<meta property="og:site_name" content="Snus Shop 24">
+<meta property="og:title" content="Snus Shop 24">
+<meta property="og:description" content="Menu i śledzenie paczek · Snus Shop 24">
+<meta property="og:image" content="https://www.snusshop.pl/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -138,12 +145,28 @@
     <p id="errText" class="muted"></p>
   </section>
 
+  <!-- Menu page (snusshop.pl/menu): the flavour section moves in here -->
+  <section id="menuView" hidden>
+    <div class="card menu-hero">
+      <img data-src="assets/logo.webp" alt="Snus Shop 24" class="menu-logo" width="84" height="84">
+      <div>
+        <h1 id="menuTitle">Menu</h1>
+        <p id="menuText" class="muted">Wybierz smak i kliknij „Zamów” — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Link maker (no ?p= in the URL) -->
   <section id="makeView" class="card maker" hidden>
     <div class="maker-hero">
       <!-- loaded only when this page is shown (customers never see it) -->
       <img data-src="assets/logo.webp" alt="Snus Shop 24" class="maker-logo" width="120" height="120">
       <img data-src="assets/rider-large.webp" alt="" class="maker-rider" width="220" height="211">
+    </div>
+    <!-- the menu link he sends to customers who ask for the menu in DMs -->
+    <div class="mk-menu">
+      <a href="/menu" class="menu-btn" id="mkMenuOpen">📋 <span id="lblMenuBtn">Menu</span></a>
+      <button type="button" class="chip-btn" id="mkMenuCopy">🔗 <span id="lblMenuCopy">Kopiuj link do menu</span></button>
     </div>
     <h1 id="mkTitle">Utwórz link śledzenia</h1>
     <p id="mkText" class="muted">Wklej numer przesyłki InPost. Otrzymasz link, który możesz wysłać klientowi.</p>

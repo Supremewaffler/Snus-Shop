@@ -235,6 +235,19 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .history .h-time { font-size: .8rem; color: var(--muted); }
 .history .h-desc { font-size: .9rem; color: var(--muted); margin-top: 2px; }
 
+/* Menu page + menu button on the link maker */
+#menuView { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.menu-hero { display: flex; align-items: center; gap: 16px; }
+.menu-logo { width: 84px; height: 84px; flex: none; }
+.menu-hero p { margin: 4px 0 0; font-size: .92rem; }
+.mk-menu { display: flex; gap: 8px; align-items: stretch; margin: 0 0 18px; flex-wrap: wrap; }
+.menu-btn {
+  flex: 1 1 160px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 18px; border-radius: 14px; text-decoration: none; font-weight: 900; font-size: 1.1rem; letter-spacing: .02em;
+  background: var(--accent); color: var(--accent-ink);
+}
+.mk-menu .chip-btn { flex: 1 1 160px; justify-content: center; display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; font-size: .9rem; }
+
 /* Flavour carousel */
 .shop-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 12px; }
 .shop-head h2 { margin: 2px 0 0; }

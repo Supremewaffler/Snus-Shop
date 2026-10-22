@@ -17,6 +17,12 @@ A tracking page for InPost parcels. It shows the same live status as InPost, but
 
 New parcels can take a few hours to appear at InPost. Until then the page says so and keeps checking.
 
+## Menu page
+
+`snusshop.pl/menu` shows the flavour section on its own, so the seller can send it to customers who ask for the menu in DMs. Customers pick a flavour and tap **Zamów**: the order message is copied and Instagram opens the chat. The home page (link maker) has a **Menu** button and a **Kopiuj link do menu** (copy menu link) button. `/menu` is set up as a rewrite in `vercel.json`; locally, use `?menu`.
+
+Link previews (Instagram, WhatsApp, Messenger) use `assets/og.jpg`.
+
 ## The map
 
 The page shows a dark, game-style city map with four pins: **Warehouse — dispatch → InPost sorting hub → Local depot → your Paczkomat / home**. A courier on a moped drives along the glowing route between them:
