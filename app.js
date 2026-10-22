@@ -12,7 +12,7 @@
       dest: "Miejsce odbioru", history: "Historia przesyłki", source: "Dane na żywo z InPost", checked: "sprawdzono",
       approx: "Pozycja kuriera na mapie jest orientacyjna — przesuwa się z każdą aktualizacją InPost.",
       hint: "Użyj dwóch palców, aby przesuwać mapę", zoomIn: "Przybliż", zoomOut: "Oddal",
-      shopTitle: "Popularne smaki", all: "Wszystkie", copied: "Wiadomość skopiowana — wklej ją w czacie",
+      shopTitle: "Popularne smaki", all: "Wszystkie",
       igNote: "Wiadomość zostanie skopiowana — po otwarciu czatu wklej ją i wyślij.", prev: "Poprzedni", next: "Następny",
       orderMsg: "Cześć! Chcę zamówić {product} 🙂", orderRef: "Numer mojej ostatniej przesyłki: {number}",
       refresh: "Odśwież", refreshing: "Sprawdzam…", refreshed: "Aktualne ✓", refreshFail: "Brak połączenia",
@@ -34,6 +34,9 @@
       send: "Wyślij zamówienie na Instagramie", clear: "Wyczyść koszyk", cleared: "Koszyk wyczyszczony", less: "Mniej", more: "Więcej",
       remove: "Usuń", close: "Zamknij", pcs: "szt.", total: "Razem: {n} szt.",
       basketHead: "Cześć! Chcę zamówić:", basketTotal: "Razem: {n} szt. 🙂",
+      gTitle: "Zamówienie skopiowane", gText: "Instagram nie pozwala wpisać wiadomości za Ciebie, więc ją skopiowaliśmy. Po otwarciu czatu:",
+      gS1: "Dotknij pola „Wiadomość…”", gS2: "Wybierz „Wklej”", gS3: "Naciśnij „Wyślij”", gPaste: "Wklej", gPh: "Wiadomość…",
+      gOpen: "Otwórz Instagram", gCopy: "Skopiuj ponownie", gDone: "Wysłane? Wyczyść koszyk", gRecopied: "Skopiowano ponownie",
       menuBtn: "Menu", menuCopy: "Kopiuj link do menu", menuCopied: "Link do menu skopiowany",
       mkTitle: "Utwórz link śledzenia", mkText: "Wklej numer przesyłki InPost. Otrzymasz link, który możesz wysłać klientowi.",
       mkBtn: "Utwórz link", mkCopy: "Kopiuj", mkCopied: "Skopiowano!", mkOpen: "Podgląd ↗", mkDemo: "Chcesz zobaczyć, jak to wygląda?",
@@ -44,7 +47,7 @@
       dest: "Pickup point", history: "Parcel history", source: "Live data from InPost", checked: "checked",
       approx: "The courier's position on the map is approximate — it moves with every InPost update.",
       hint: "Use two fingers to move the map", zoomIn: "Zoom in", zoomOut: "Zoom out",
-      shopTitle: "Popular flavours", all: "All", copied: "Message copied — paste it in the chat",
+      shopTitle: "Popular flavours", all: "All",
       igNote: "The message is copied for you — paste it in the chat and send.", prev: "Previous", next: "Next",
       orderMsg: "Hi! I'd like to order {product} 🙂", orderRef: "My last parcel number: {number}",
       refresh: "Refresh", refreshing: "Checking…", refreshed: "Up to date ✓", refreshFail: "No connection",
@@ -66,6 +69,9 @@
       send: "Send order on Instagram", clear: "Empty basket", cleared: "Basket emptied", less: "Fewer", more: "More",
       remove: "Remove", close: "Close", pcs: "pcs", total: "Total: {n} pcs",
       basketHead: "Hi! I'd like to order:", basketTotal: "Total: {n} pcs 🙂",
+      gTitle: "Order copied", gText: "Instagram doesn't let websites type the message for you, so we copied it. When the chat opens:",
+      gS1: "Tap the “Message…” box", gS2: "Choose “Paste”", gS3: "Tap “Send”", gPaste: "Paste", gPh: "Message…",
+      gOpen: "Open Instagram", gCopy: "Copy again", gDone: "Sent? Empty the basket", gRecopied: "Copied again",
       menuBtn: "Menu", menuCopy: "Copy menu link", menuCopied: "Menu link copied",
       mkTitle: "Create a tracking link", mkText: "Paste an InPost tracking number to get a link you can send to the customer.",
       mkBtn: "Create link", mkCopy: "Copy", mkCopied: "Copied!", mkOpen: "Preview ↗", mkDemo: "Want to see what it looks like?",
@@ -555,6 +561,8 @@
     setText("lblAdd", x.add); setText("lblBasket", x.basket); setText("lblBasketCta", x.seeBasket); setText("igLabel", x.send); setText("basketClear", x.clear);
     $("qtyMinus").setAttribute("aria-label", x.less); $("qtyPlus").setAttribute("aria-label", x.more); $("basketClose").setAttribute("aria-label", x.close);
     renderBasket();
+    ["gTitle", "gText", "gS1", "gS2", "gS3", "gCopy", "gDone"].forEach(function (k) { setText(k, x[k]); });
+    setText("gPasteLbl", x.gPaste); setText("gPh", x.gPh); setText("gOpenLbl", x.gOpen); $("gClose").setAttribute("aria-label", x.close);
     $("carPrev").setAttribute("aria-label", x.prev); $("carNext").setAttribute("aria-label", x.next);
     updateOrderButton();
     if ($("shopFilters").children.length) buildFilters();
@@ -1033,6 +1041,29 @@
   }
   function openBasket() { if (!basket.length) return; $("basketSheet").hidden = false; document.body.classList.add("sheet-open"); }
   function closeBasket() { $("basketSheet").hidden = true; document.body.classList.remove("sheet-open"); }
+  // ---------- "order copied" guide ----------
+  // Instagram can't pre-fill a DM. Copy the order, explain the 3 taps, then open the chat.
+  var guideMsg = "", guideFromBasket = false;
+  function startOrder(message, fromBasket) {
+    guideMsg = message; guideFromBasket = !!fromBasket;
+    copyText(message);
+    $("gMsg").textContent = message;
+    $("gDone").hidden = !fromBasket;
+    $("gOpen").href = "https://ig.me/m/" + encodeURIComponent(CFG.instagram);
+    closeBasket();
+    if ($("toast")) $("toast").classList.remove("show");   // don't cover the guide
+    $("guide").hidden = false;
+    document.body.classList.add("sheet-open");
+  }
+  function closeGuide() { $("guide").hidden = true; document.body.classList.remove("sheet-open"); }
+  function setupGuide() {
+    $("gClose").addEventListener("click", closeGuide);
+    $("gOpen").addEventListener("click", function () { copyText(guideMsg); });   // copy once more right before leaving
+    $("gCopy").addEventListener("click", function () { copyText(guideMsg); toast(t().gRecopied); });
+    $("gDone").addEventListener("click", function () { basket = []; saveBasket(); renderBasket(); closeGuide(); toast(t().cleared); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("guide").hidden) closeGuide(); });
+  }
+
   function setupBasket() {
     loadBasket();
     $("qtyMinus").addEventListener("click", function () { setQty(pickQty - 1); });
@@ -1044,11 +1075,12 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeBasket(); });
     $("basketClear").addEventListener("click", function () { basket = []; saveBasket(); renderBasket(); toast(t().cleared); });
     // Instagram can't pre-fill a DM: copy the whole order and open the chat; the customer pastes it.
-    $("igBtn").addEventListener("click", function () {
-      copyText(basketMessage());
+    $("igBtn").addEventListener("click", function (e) {
+      e.preventDefault();
       if (window.va) window.va("event", { name: "Instagram order", data: { items: basket.length, pieces: basketCount() } });
-      toast(t().copied);
+      startOrder(basketMessage(), true);
     });
+    setupGuide();
     window.addEventListener("storage", function (e) { if (e.key === BASKET_KEY) { loadBasket(); renderBasket(); } });   // other open tabs
     setQty(1);
     renderBasket();
@@ -1112,7 +1144,7 @@
     fmtDate: fmtDate, prettyNumber: prettyNumber, statusText: statusText, loadStatuses: loadStatuses,
     toast: function (m) { toast(m); }, copyText: copyText,
     products: function () { return CFG.products || []; }, slugOf: slugOf, productTitle: productTitle, lineOf: lineOf, drawTin: drawTin,
-    orderMessageFor: orderMessageFor,
+    orderMessageFor: orderMessageFor, startOrder: function (msg) { startOrder(msg, false); },
     igUrl: function () { return "https://ig.me/m/" + encodeURIComponent(CFG.instagram); },
     selectProductBySlug: function (slug) {
       var list = CFG.products || [], found = -1;

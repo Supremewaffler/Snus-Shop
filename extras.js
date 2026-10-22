@@ -84,9 +84,9 @@
     if (l.strength) txt.appendChild(h("div", "muted small", l.strength));
     var again = h("a", "x-again", "🔁 " + L("Zamów ponownie", "Order again"));
     again.href = S.igUrl(); again.target = "_blank"; again.rel = "noopener";
-    again.addEventListener("click", function () {
-      S.copyText(S.orderMessageFor(ordered));
-      S.toast(L("Wiadomość skopiowana — wklej ją w czacie", "Message copied — paste it in the chat"));
+    again.addEventListener("click", function (e) {
+      e.preventDefault();
+      S.startOrder(S.orderMessageFor(ordered));      // same "order copied" guide as the basket
     });
     txt.appendChild(again);
     orderBox.appendChild(art); orderBox.appendChild(txt);

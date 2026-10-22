@@ -334,6 +334,42 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 }
 .in-basket[hidden] { display: none; }
 
+/* "Order copied" guide */
+.guide { position: fixed; inset: 0; z-index: 28; background: rgba(0,0,0,.72); display: grid; place-items: center; padding: 16px; overflow: auto; }
+.guide[hidden] { display: none; }
+.guide-panel {
+  position: relative; width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line); border-radius: 22px;
+  padding: 24px 20px 18px; text-align: center; animation: sheetUp .25s ease-out;
+}
+.guide-close { position: absolute; top: 12px; right: 12px; }
+.guide-check { width: 56px; height: 56px; margin: 0 auto 8px; border-radius: 50%; display: grid; place-items: center; background: var(--ok); color: #06210f; font: 900 1.8rem/1 system-ui, sans-serif; }
+.guide-panel h2 { margin: 0 0 6px; font-size: 1.35rem; }
+.guide-panel > p { margin: 0 0 14px; font-size: .92rem; }
+.guide-steps { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; text-align: left; }
+.guide-steps li { display: flex; align-items: center; gap: 12px; background: var(--card-2); border-radius: 12px; padding: 10px 12px; }
+.guide-steps span { width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-weight: 900; }
+.guide-demo { position: relative; margin: 26px 0 14px; padding-top: 6px; }
+.gd-bar { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 999px; background: #1f1f25; border: 1px solid #34343c; }
+.gd-cam { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #3b82f6; font-size: .9rem; flex: none; }
+.gd-input { position: relative; flex: 1; text-align: left; color: #8b8b94; font-size: .92rem; padding-left: 4px; }
+.gd-send { color: #3b82f6; font-weight: 900; padding-right: 6px; }
+.gd-tap { position: absolute; left: 20px; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: rgba(255,255,255,.35); animation: gdTap 1.6s ease-out infinite; }
+@keyframes gdTap { 0% { transform: scale(.4); opacity: .9; } 70%, 100% { transform: scale(1.6); opacity: 0; } }
+.gd-bubble {
+  position: absolute; left: 34px; top: -30px; padding: 6px 12px; border-radius: 8px; background: #f2f0ea; color: #111; font-weight: 800; font-size: .85rem;
+  animation: gdPaste 1.6s ease-out infinite;
+}
+.gd-bubble::after { content: ""; position: absolute; left: 14px; bottom: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: #f2f0ea; }
+@keyframes gdPaste { 0%, 30% { opacity: 0; transform: translateY(4px); } 45%, 90% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.guide-msg {
+  margin: 0 0 14px; padding: 10px 12px; max-height: 120px; overflow: auto; text-align: left; white-space: pre-wrap; word-break: break-word;
+  background: var(--card-2); border-radius: 12px; font: 600 .82rem/1.45 system-ui, sans-serif; color: var(--muted);
+}
+.guide-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.guide-links .basket-clear { margin: 10px 0 0; }
+.guide-links [hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .gd-tap, .gd-bubble { animation: none; } .gd-bubble { opacity: 1; } }
+
 /* Basket bar + panel */
 .basket-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
 .basket-open {

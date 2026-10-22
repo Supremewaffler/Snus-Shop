@@ -213,6 +213,39 @@
   </div>
 </div>
 
+<!-- Shown after tapping "send": Instagram can't pre-fill a DM, so explain the paste step -->
+<div id="guide" class="guide" hidden role="dialog" aria-modal="true" aria-labelledby="gTitle">
+  <div class="guide-panel">
+    <button type="button" id="gClose" class="chip-btn guide-close" aria-label="Zamknij">✕</button>
+    <div class="guide-check">✓</div>
+    <h2 id="gTitle">Zamówienie skopiowane</h2>
+    <p id="gText" class="muted">Instagram nie pozwala wpisać wiadomości za Ciebie, więc ją skopiowaliśmy. Po otwarciu czatu:</p>
+    <ol class="guide-steps">
+      <li><span>1</span><b id="gS1">Dotknij pola „Wiadomość…”</b></li>
+      <li><span>2</span><b id="gS2">Wybierz „Wklej”</b></li>
+      <li><span>3</span><b id="gS3">Naciśnij „Wyślij”</b></li>
+    </ol>
+    <!-- little picture of the chat box with the Paste bubble -->
+    <div class="guide-demo" aria-hidden="true">
+      <div class="gd-bubble" id="gPasteLbl">Wklej</div>
+      <div class="gd-bar">
+        <span class="gd-cam">📷</span>
+        <span class="gd-input"><span class="gd-tap"></span><span id="gPh">Wiadomość…</span></span>
+        <span class="gd-send">➤</span>
+      </div>
+    </div>
+    <pre id="gMsg" class="guide-msg"></pre>
+    <a id="gOpen" class="ig-btn" href="https://ig.me/m/snus.shop24" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg>
+      <span id="gOpenLbl">Otwórz Instagram</span>
+    </a>
+    <div class="guide-links">
+      <button type="button" id="gCopy" class="basket-clear">Skopiuj ponownie</button>
+      <button type="button" id="gDone" class="basket-clear">Wysłane? Wyczyść koszyk</button>
+    </div>
+  </div>
+</div>
+
 <script src="config.js"></script>
 <script src="layouts.js"></script>
 <script src="app.js"></script>
