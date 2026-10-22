@@ -19,7 +19,9 @@ New parcels can take a few hours to appear at InPost. Until then the page says s
 
 ## Menu page
 
-`snusshop.pl/menu` shows the flavour section on its own, so the seller can send it to customers who ask for the menu in DMs. Customers pick a flavour and tap **Zamów**: the order message is copied and Instagram opens the chat. The home page (link maker) has a **Menu** button and a **Kopiuj link do menu** (copy menu link) button. `/menu` is set up as a rewrite in `vercel.json`; locally, use `?menu`.
+`snusshop.pl/menu` shows the flavour section on its own, so the seller can send it to customers who ask for the menu in DMs.
+
+**Basket:** customers pick a flavour, set a quantity with − / +, and tap **Dodaj do koszyka** (Add to basket). Repeat for other flavours. A basket bar at the bottom opens the basket, where they can change quantities or remove items. **Wyślij zamówienie na Instagramie** (Send order on Instagram) copies one message listing every item and the total number of pieces, and opens the Instagram chat. The basket is saved on the customer's phone, and the same basket appears on the menu page and on tracking pages; there, the message also includes their parcel number. The home page (link maker) has a **Menu** button and a **Kopiuj link do menu** (copy menu link) button. `/menu` is set up as a rewrite in `vercel.json`; locally, use `?menu`.
 
 Link previews (Instagram, WhatsApp, Messenger) use `assets/og.jpg`.
 

@@ -123,11 +123,15 @@
       <div id="shopFilters" class="shop-filters" hidden></div>
       <div id="carousel" class="carousel" tabindex="0"></div>
       <div id="carDots" class="car-dots"></div>
-      <a id="igBtn" class="ig-btn" href="https://ig.me/m/snus.shop24" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg>
-        <span id="igLabel">Zamów na Instagramie</span>
-      </a>
-      <p id="igNote" class="ig-note muted small">Wiadomość zostanie skopiowana — po otwarciu czatu wklej ją i wyślij.</p>
+      <!-- pick how many, add to the basket; the basket is sent from the basket panel -->
+      <div class="add-row">
+        <div class="qty" role="group">
+          <button type="button" id="qtyMinus" aria-label="Mniej">−</button>
+          <span id="qtyVal" aria-live="polite">1</span>
+          <button type="button" id="qtyPlus" aria-label="Więcej">+</button>
+        </div>
+        <button type="button" id="addBtn" class="add-btn">🧺 <span id="lblAdd">Dodaj do koszyka</span></button>
+      </div>
     </section>
 
     <div class="card">
@@ -151,7 +155,7 @@
       <img data-src="assets/logo.webp" alt="Snus Shop 24" class="menu-logo" width="84" height="84">
       <div>
         <h1 id="menuTitle">Menu</h1>
-        <p id="menuText" class="muted">Wybierz smak i kliknij „Zamów” — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.</p>
+        <p id="menuText" class="muted">Dodaj smaki do koszyka i wyślij zamówienie — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.</p>
       </div>
     </div>
   </section>
@@ -182,6 +186,32 @@
     <p class="muted small"><span id="mkDemo">Chcesz zobaczyć, jak to wygląda?</span> <a href="?p=demo">Demo</a></p>
   </section>
 </main>
+
+<!-- Basket: bar at the bottom + panel with the order -->
+<div id="basketBar" class="basket-bar" hidden>
+  <button type="button" id="basketOpen" class="basket-open">
+    <span class="basket-ico">🧺</span>
+    <span id="basketSummary" class="basket-summary"></span>
+    <span id="lblBasketCta" class="basket-cta">Zobacz koszyk</span>
+  </button>
+</div>
+<div id="basketSheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="lblBasket">
+  <div class="sheet-backdrop" id="basketBackdrop"></div>
+  <div class="sheet-panel">
+    <div class="sheet-head">
+      <h2 id="lblBasket">Koszyk</h2>
+      <button type="button" id="basketClose" class="chip-btn" aria-label="Zamknij">✕</button>
+    </div>
+    <ul id="basketList" class="basket-list"></ul>
+    <div id="basketTotal" class="basket-total"></div>
+    <a id="igBtn" class="ig-btn" href="https://ig.me/m/snus.shop24" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg>
+      <span id="igLabel">Wyślij zamówienie na Instagramie</span>
+    </a>
+    <p id="igNote" class="ig-note muted small">Wiadomość zostanie skopiowana — po otwarciu czatu wklej ją i wyślij.</p>
+    <button type="button" id="basketClear" class="basket-clear">Wyczyść koszyk</button>
+  </div>
+</div>
 
 <script src="config.js"></script>
 <script src="layouts.js"></script>

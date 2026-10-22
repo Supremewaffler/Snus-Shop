@@ -12,7 +12,7 @@
       dest: "Miejsce odbioru", history: "Historia przesyłki", source: "Dane na żywo z InPost", checked: "sprawdzono",
       approx: "Pozycja kuriera na mapie jest orientacyjna — przesuwa się z każdą aktualizacją InPost.",
       hint: "Użyj dwóch palców, aby przesuwać mapę", zoomIn: "Przybliż", zoomOut: "Oddal",
-      shopTitle: "Popularne smaki", all: "Wszystkie", order: "Zamów {product} na Instagramie", copied: "Wiadomość skopiowana — wklej ją w czacie",
+      shopTitle: "Popularne smaki", all: "Wszystkie", copied: "Wiadomość skopiowana — wklej ją w czacie",
       igNote: "Wiadomość zostanie skopiowana — po otwarciu czatu wklej ją i wyślij.", prev: "Poprzedni", next: "Następny",
       orderMsg: "Cześć! Chcę zamówić {product} 🙂", orderRef: "Numer mojej ostatniej przesyłki: {number}",
       refresh: "Odśwież", refreshing: "Sprawdzam…", refreshed: "Aktualne ✓", refreshFail: "Brak połączenia",
@@ -29,7 +29,11 @@
       },
       errTitle: "Jeszcze nie ruszyliśmy", errNotFound: "InPost nie ma jeszcze informacji o tej przesyłce. Zwykle pojawiają się kilka godzin po nadaniu — strona sama się odświeży.",
       errNet: "Nie udało się połączyć z InPost. Spróbujemy ponownie za chwilę.", errBad: "Ten link wygląda na niepełny. Poproś sprzedawcę o nowy.",
-      menuTitle: "Menu", menuText: "Wybierz smak i kliknij „Zamów” — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.",
+      menuTitle: "Menu", menuText: "Dodaj smaki do koszyka i wyślij zamówienie — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.",
+      add: "Dodaj do koszyka", added: "Dodano {q}× {product} do koszyka", basket: "Koszyk", seeBasket: "Zobacz koszyk",
+      send: "Wyślij zamówienie na Instagramie", clear: "Wyczyść koszyk", cleared: "Koszyk wyczyszczony", less: "Mniej", more: "Więcej",
+      remove: "Usuń", close: "Zamknij", pcs: "szt.", total: "Razem: {n} szt.",
+      basketHead: "Cześć! Chcę zamówić:", basketTotal: "Razem: {n} szt. 🙂",
       menuBtn: "Menu", menuCopy: "Kopiuj link do menu", menuCopied: "Link do menu skopiowany",
       mkTitle: "Utwórz link śledzenia", mkText: "Wklej numer przesyłki InPost. Otrzymasz link, który możesz wysłać klientowi.",
       mkBtn: "Utwórz link", mkCopy: "Kopiuj", mkCopied: "Skopiowano!", mkOpen: "Podgląd ↗", mkDemo: "Chcesz zobaczyć, jak to wygląda?",
@@ -40,7 +44,7 @@
       dest: "Pickup point", history: "Parcel history", source: "Live data from InPost", checked: "checked",
       approx: "The courier's position on the map is approximate — it moves with every InPost update.",
       hint: "Use two fingers to move the map", zoomIn: "Zoom in", zoomOut: "Zoom out",
-      shopTitle: "Popular flavours", all: "All", order: "Order {product} on Instagram", copied: "Message copied — paste it in the chat",
+      shopTitle: "Popular flavours", all: "All", copied: "Message copied — paste it in the chat",
       igNote: "The message is copied for you — paste it in the chat and send.", prev: "Previous", next: "Next",
       orderMsg: "Hi! I'd like to order {product} 🙂", orderRef: "My last parcel number: {number}",
       refresh: "Refresh", refreshing: "Checking…", refreshed: "Up to date ✓", refreshFail: "No connection",
@@ -57,7 +61,11 @@
       },
       errTitle: "Not on the road yet", errNotFound: "InPost has no information about this parcel yet. It usually appears a few hours after it is sent — this page refreshes by itself.",
       errNet: "Couldn't reach InPost. Trying again shortly.", errBad: "This link looks incomplete. Ask the seller for a new one.",
-      menuTitle: "Menu", menuText: "Pick a flavour and tap “Order” — the message is copied for you and Instagram opens the chat. Paste it and send.",
+      menuTitle: "Menu", menuText: "Add flavours to your basket and send the order — the message is copied for you and Instagram opens the chat. Paste it and send.",
+      add: "Add to basket", added: "Added {q}× {product} to the basket", basket: "Basket", seeBasket: "View basket",
+      send: "Send order on Instagram", clear: "Empty basket", cleared: "Basket emptied", less: "Fewer", more: "More",
+      remove: "Remove", close: "Close", pcs: "pcs", total: "Total: {n} pcs",
+      basketHead: "Hi! I'd like to order:", basketTotal: "Total: {n} pcs 🙂",
       menuBtn: "Menu", menuCopy: "Copy menu link", menuCopied: "Menu link copied",
       mkTitle: "Create a tracking link", mkText: "Paste an InPost tracking number to get a link you can send to the customer.",
       mkBtn: "Create link", mkCopy: "Copy", mkCopied: "Copied!", mkOpen: "Preview ↗", mkDemo: "Want to see what it looks like?",
@@ -544,6 +552,9 @@
     setText("lblDest", x.dest); setText("lblHistory", x.history); setText("lblSource", x.source); setText("lblChecked", x.checked);
     setText("lblApprox", x.approx); setText("lblRefresh", x.refresh); setText("lblHint", x.hint);
     setText("lblShopTitle", x.shopTitle); setText("igNote", x.igNote);
+    setText("lblAdd", x.add); setText("lblBasket", x.basket); setText("lblBasketCta", x.seeBasket); setText("igLabel", x.send); setText("basketClear", x.clear);
+    $("qtyMinus").setAttribute("aria-label", x.less); $("qtyPlus").setAttribute("aria-label", x.more); $("basketClose").setAttribute("aria-label", x.close);
+    renderBasket();
     $("carPrev").setAttribute("aria-label", x.prev); $("carNext").setAttribute("aria-label", x.next);
     updateOrderButton();
     if ($("shopFilters").children.length) buildFilters();
@@ -661,6 +672,7 @@
     }
 
     $("shopCard").hidden = !(CFG.products && CFG.products.length);
+    renderBasket();
 
     var ol = $("history");
     ol.innerHTML = "";
@@ -810,7 +822,7 @@
     $("carPrev").addEventListener("click", function () { selectProduct(Math.max(0, activeProduct - 1), true); });
     $("carNext").addEventListener("click", function () { selectProduct(Math.min(shopList.length - 1, activeProduct + 1), true); });
     $("igBtn").href = "https://ig.me/m/" + encodeURIComponent(CFG.instagram);
-    $("igBtn").addEventListener("click", orderClick);
+    setupBasket();
     buildFilters();
     buildShop();
   }
@@ -873,6 +885,8 @@
       var name = document.createElement("div"); name.className = "flavour-name"; name.textContent = p.name;
       var note = document.createElement("div"); note.className = "flavour-note";
       note.textContent = [l.name, l.strength].filter(Boolean).join(" · ");
+      var badge = document.createElement("span"); badge.className = "in-basket"; badge.setAttribute("data-slug", slugOf(p));
+      card.appendChild(badge);
       card.appendChild(art); card.appendChild(name); card.appendChild(note);
       card.addEventListener("click", function () { selectProduct(i, true); });
       car.appendChild(card);
@@ -888,6 +902,7 @@
     car.scrollLeft = 0;
     activeProduct = 0;
     selectProduct(0, false);
+    renderBasket();
   }
   function selectProduct(i, scroll) {
     var car = $("carousel"), cards = car.children;
@@ -905,11 +920,7 @@
     updateOrderButton();
   }
   function currentProduct() { return shopList[activeProduct]; }
-  function updateOrderButton() {
-    var p = currentProduct();
-    if (p) setText("igLabel", t().order.replace("{product}", p.name));
-  }
-  function orderMessage() { return orderMessageFor(currentProduct()); }
+  function updateOrderButton() { setQty(1); }   // each newly picked flavour starts at 1
   function orderMessageFor(p) {
     var x = t(), l = p ? lineOf(p) : {};
     var what = p ? productTitle(p) + (l.strength ? " (" + l.strength + ")" : "") : "";
@@ -930,10 +941,117 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {});
     return done;
   }
-  function orderClick() {
-    copyText(orderMessage());
-    if (window.va) window.va("event", { name: "Instagram order", data: { product: (currentProduct() || {}).name || "" } });
-    toast(t().copied);
+  // ---------- basket ----------
+  // Saved on the customer's phone so it survives closing the page. Items: [{ slug, qty }].
+  var BASKET_KEY = "snus-basket", basket = [], pickQty = 1;
+  function productBySlug(slug) {
+    var list = CFG.products || [];
+    for (var i = 0; i < list.length; i++) if (slugOf(list[i]) === slug) return list[i];
+    return null;
+  }
+  function loadBasket() {
+    try { basket = JSON.parse(localStorage.getItem(BASKET_KEY) || "[]"); } catch (e) { basket = []; }
+    basket = basket.filter(function (it) { return it && productBySlug(it.slug) && it.qty > 0; });   // drop flavours no longer on the menu
+  }
+  function saveBasket() { try { localStorage.setItem(BASKET_KEY, JSON.stringify(basket)); } catch (e) {} }
+  function basketCount() { return basket.reduce(function (n, it) { return n + it.qty; }, 0); }
+  function plFlavours(n) {
+    if (lang !== "pl") return n + (n === 1 ? " flavour" : " flavours");
+    var last = n % 10, teen = n % 100 >= 12 && n % 100 <= 14;
+    return n + (n === 1 ? " smak" : last >= 2 && last <= 4 && !teen ? " smaki" : " smaków");
+  }
+  function setQty(q) { pickQty = Math.max(1, Math.min(99, q)); setText("qtyVal", pickQty); $("qtyMinus").disabled = pickQty <= 1; }
+  function changeItem(slug, delta) {
+    for (var i = 0; i < basket.length; i++) if (basket[i].slug === slug) {
+      basket[i].qty = Math.min(99, basket[i].qty + delta);
+      if (basket[i].qty <= 0) basket.splice(i, 1);
+      break;
+    }
+    saveBasket(); renderBasket();
+  }
+  function addToBasket() {
+    var p = currentProduct();
+    if (!p) return;
+    var slug = slugOf(p), found = false;
+    basket.forEach(function (it) { if (it.slug === slug) { it.qty = Math.min(99, it.qty + pickQty); found = true; } });
+    if (!found) basket.push({ slug: slug, qty: pickQty });
+    saveBasket(); renderBasket();
+    toast(t().added.replace("{q}", pickQty).replace("{product}", p.name));
+    var bar = $("basketBar");
+    bar.classList.remove("bump"); void bar.offsetWidth; bar.classList.add("bump");
+    setQty(1);
+  }
+  function basketMessage() {
+    var x = t();
+    var lines = [x.basketHead];
+    basket.forEach(function (it) {
+      var p = productBySlug(it.slug), l = lineOf(p);
+      lines.push("• " + it.qty + "× " + productTitle(p) + (l.strength ? " (" + l.strength + ")" : ""));
+    });
+    lines.push(x.basketTotal.replace("{n}", basketCount()));
+    if (number && !isDemo) lines.push(x.orderRef.replace("{number}", prettyNumber(number)));
+    return lines.join("\n");
+  }
+  function renderBasket() {
+    if (!$("basketBar")) return;
+    var x = t(), n = basketCount(), shopShown = !$("shopCard").hidden;
+    // bar
+    $("basketBar").hidden = !n || !shopShown;
+    document.body.classList.toggle("has-basket", !!n && shopShown);
+    setText("basketSummary", n + " " + x.pcs + " · " + plFlavours(basket.length));
+    // badges on the flavour cards
+    Array.prototype.forEach.call(document.querySelectorAll("#carousel .in-basket"), function (b) {
+      var q = 0;
+      basket.forEach(function (it) { if (it.slug === b.getAttribute("data-slug")) q = it.qty; });
+      b.textContent = q ? "×" + q : "";
+      b.hidden = !q;
+    });
+    // panel
+    var ul = $("basketList");
+    ul.innerHTML = "";
+    basket.forEach(function (it) {
+      var p = productBySlug(it.slug), l = lineOf(p);
+      var li = document.createElement("li"); li.className = "basket-item";
+      var art = document.createElement("div"); art.className = "basket-art"; art.appendChild(p.image ? Object.assign(document.createElement("img"), { src: p.image, alt: "" }) : drawTin(p));
+      var txt = document.createElement("div"); txt.className = "basket-txt";
+      var nm = document.createElement("div"); nm.className = "basket-name"; nm.textContent = p.name;
+      var sub = document.createElement("div"); sub.className = "muted small"; sub.textContent = [l.name, l.strength].filter(Boolean).join(" · ");
+      txt.appendChild(nm); txt.appendChild(sub);
+      var q = document.createElement("div"); q.className = "qty qty-sm";
+      var minus = document.createElement("button"); minus.type = "button"; minus.textContent = it.qty > 1 ? "−" : "✕";
+      minus.setAttribute("aria-label", it.qty > 1 ? x.less : x.remove);
+      minus.addEventListener("click", function () { changeItem(it.slug, -1); });
+      var val = document.createElement("span"); val.textContent = it.qty;
+      var plus = document.createElement("button"); plus.type = "button"; plus.textContent = "+"; plus.setAttribute("aria-label", x.more);
+      plus.addEventListener("click", function () { changeItem(it.slug, 1); });
+      q.appendChild(minus); q.appendChild(val); q.appendChild(plus);
+      li.appendChild(art); li.appendChild(txt); li.appendChild(q);
+      ul.appendChild(li);
+    });
+    setText("basketTotal", x.total.replace("{n}", n));
+    if (!n) closeBasket();
+  }
+  function openBasket() { if (!basket.length) return; $("basketSheet").hidden = false; document.body.classList.add("sheet-open"); }
+  function closeBasket() { $("basketSheet").hidden = true; document.body.classList.remove("sheet-open"); }
+  function setupBasket() {
+    loadBasket();
+    $("qtyMinus").addEventListener("click", function () { setQty(pickQty - 1); });
+    $("qtyPlus").addEventListener("click", function () { setQty(pickQty + 1); });
+    $("addBtn").addEventListener("click", addToBasket);
+    $("basketOpen").addEventListener("click", openBasket);
+    $("basketClose").addEventListener("click", closeBasket);
+    $("basketBackdrop").addEventListener("click", closeBasket);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeBasket(); });
+    $("basketClear").addEventListener("click", function () { basket = []; saveBasket(); renderBasket(); toast(t().cleared); });
+    // Instagram can't pre-fill a DM: copy the whole order and open the chat; the customer pastes it.
+    $("igBtn").addEventListener("click", function () {
+      copyText(basketMessage());
+      if (window.va) window.va("event", { name: "Instagram order", data: { items: basket.length, pieces: basketCount() } });
+      toast(t().copied);
+    });
+    window.addEventListener("storage", function (e) { if (e.key === BASKET_KEY) { loadBasket(); renderBasket(); } });   // other open tabs
+    setQty(1);
+    renderBasket();
   }
   var toastTimer = null;
   function toast(msg) {
@@ -953,6 +1071,7 @@
     $("menuView").appendChild(shop);         // same flavour section as on the tracking page
     shop.hidden = false;
     setupShop();
+    renderBasket();
     document.title = t().menuTitle + " · " + CFG.brandName;
   }
 

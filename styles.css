@@ -311,6 +311,63 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .car-dots button { width: 8px; height: 8px; border-radius: 4px; border: 0; padding: 0; background: var(--line); cursor: pointer; transition: width .2s, background .2s; }
 .car-dots button.on { width: 22px; background: var(--accent); }
 .car-dots:empty { display: none; }
+/* Add to basket row */
+.add-row { display: flex; gap: 10px; align-items: stretch; }
+.qty {
+  display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 14px; background: var(--card-2); overflow: hidden; flex: none;
+}
+.qty button {
+  width: 44px; height: 48px; border: 0; background: none; color: var(--ink); font: 700 1.35rem/1 system-ui, sans-serif; cursor: pointer;
+}
+.qty button:disabled { opacity: .3; cursor: default; }
+.qty span { min-width: 26px; text-align: center; font-weight: 800; font-size: 1.05rem; }
+.qty-sm button { width: 36px; height: 38px; font-size: 1.15rem; }
+.add-btn {
+  flex: 1; border: 0; border-radius: 14px; padding: 0 16px; background: var(--accent); color: var(--accent-ink);
+  font: inherit; font-weight: 900; font-size: 1rem; cursor: pointer;
+}
+.add-btn:active { transform: scale(.98); }
+.flavour { position: relative; }
+.in-basket {
+  position: absolute; top: 8px; right: 8px; z-index: 1; min-width: 30px; padding: 4px 8px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink); font-weight: 900; font-size: .8rem; box-shadow: 0 2px 8px rgba(0,0,0,.5);
+}
+.in-basket[hidden] { display: none; }
+
+/* Basket bar + panel */
+.basket-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+.basket-open {
+  pointer-events: auto; width: 100%; max-width: 788px; margin: 0 auto; display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,.18); cursor: pointer; font: inherit; text-align: left;
+  background: rgba(20,20,26,.94); color: var(--ink); box-shadow: 0 10px 30px rgba(0,0,0,.55);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.basket-ico { font-size: 1.4rem; }
+.basket-summary { flex: 1; font-weight: 800; font-size: .92rem; min-width: 0; }
+.basket-cta { background: var(--accent); color: var(--accent-ink); font-weight: 900; font-size: .85rem; padding: 8px 12px; border-radius: 10px; white-space: nowrap; }
+.basket-bar.bump .basket-open { animation: bump .45s ease; }
+@keyframes bump { 30% { transform: scale(1.04); } 60% { transform: scale(.98); } }
+body.has-basket main { padding-bottom: 96px; }
+body.sheet-open { overflow: hidden; }
+.sheet { position: fixed; inset: 0; z-index: 25; }
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); }
+.sheet-panel {
+  position: absolute; left: 0; right: 0; bottom: 0; max-width: 820px; margin: 0 auto; max-height: 85vh; overflow: auto;
+  background: var(--card); border: 1px solid var(--line); border-bottom: 0; border-radius: 22px 22px 0 0;
+  padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); animation: sheetUp .25s ease-out;
+}
+@keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sheet-head h2 { margin: 0; font-size: 1.3rem; }
+.basket-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.basket-item { display: flex; align-items: center; gap: 12px; background: var(--card-2); border-radius: 14px; padding: 8px 10px; }
+.basket-art { width: 52px; height: 52px; flex: none; display: grid; place-items: center; container-type: inline-size; }
+.basket-art .tin { width: 100%; border-width: 2px; box-shadow: none; }
+.basket-art img { width: 100%; height: 100%; object-fit: contain; }
+.basket-txt { flex: 1; min-width: 0; }
+.basket-name { font-weight: 800; }
+.basket-total { font-weight: 900; text-align: right; margin: 12px 4px; }
+.basket-clear { display: block; margin: 10px auto 0; background: none; border: 0; color: var(--muted); font: inherit; font-size: .85rem; text-decoration: underline; cursor: pointer; }
 .ig-btn {
   display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
   padding: 14px 18px; border-radius: 14px; text-decoration: none; font-weight: 800; color: #fff;
@@ -319,7 +376,7 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 .ig-btn svg { flex: none; }
 .ig-note { text-align: center; margin: 8px 0 0; }
 .toast {
-  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; z-index: 10;
+  position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); transform: translate(-50%, -20px); opacity: 0; z-index: 30;
   background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 999px; font-weight: 800; font-size: .9rem;
   transition: opacity .25s, transform .25s; pointer-events: none; max-width: calc(100% - 32px); text-align: center;
 }
