@@ -120,6 +120,10 @@ The Snus Shop 24 artwork lives in `assets/`:
 
 To update the artwork, replace these files with new versions of the same size. Phones keep files from `assets/` for up to a week (see `vercel.json`), so give a changed image a new file name (e.g. `rider-2.webp`) and update the reference to it. Otherwise returning customers may keep seeing the old one.
 
+## Updating the site
+
+`index.html` loads the code and styles with `?v=…` (`window.V`). **Change that version on every update**, so phones fetch the new files on the very next visit instead of using the copies they have stored.
+
 ## Hosting
 
 These are static files (`index.html`, `styles.css`, `app.js`, `config.js`), so any static host works:

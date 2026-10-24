@@ -21,7 +21,7 @@
 
   // styles for everything below
   var css = document.createElement("link");
-  css.rel = "stylesheet"; css.href = "extras.css";
+  css.rel = "stylesheet"; css.href = "extras.css?v=" + (window.V || "");
   document.head.appendChild(css);
 
   if (S.preview) {

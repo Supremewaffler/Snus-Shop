@@ -1034,22 +1034,36 @@
       b.textContent = q ? "×" + q : "";
       b.hidden = !q;
     });
-    // panel
-    var ul = $("basketList");
+    // panel — when only quantities changed, update the numbers in place. Rebuilding the buttons
+    // between quick taps makes iPhone treat the second tap as a double-tap zoom.
+    var ul = $("basketList"), slugs = basket.map(function (it) { return it.slug; }).join(",");
+    if (ul.getAttribute("data-slugs") === slugs && ul.getAttribute("data-lang") === lang) {
+      basket.forEach(function (it) {
+        var li = ul.querySelector('[data-slug="' + it.slug + '"]');
+        li.querySelector(".q-val").textContent = it.qty;
+        var minus = li.querySelector(".q-minus");
+        minus.textContent = it.qty > 1 ? "−" : "✕";
+        minus.setAttribute("aria-label", it.qty > 1 ? x.less : x.remove);
+      });
+      setText("basketTotal", x.total.replace("{n}", n));
+      if (!n) closeBasket();
+      return;
+    }
+    ul.setAttribute("data-slugs", slugs); ul.setAttribute("data-lang", lang);
     ul.innerHTML = "";
     basket.forEach(function (it) {
       var p = productBySlug(it.slug), l = lineOf(p);
-      var li = document.createElement("li"); li.className = "basket-item";
+      var li = document.createElement("li"); li.className = "basket-item"; li.setAttribute("data-slug", it.slug);
       var art = document.createElement("div"); art.className = "basket-art"; art.appendChild(p.image ? Object.assign(document.createElement("img"), { src: p.image, alt: "" }) : drawTin(p));
       var txt = document.createElement("div"); txt.className = "basket-txt";
       var nm = document.createElement("div"); nm.className = "basket-name"; nm.textContent = p.name;
       var sub = document.createElement("div"); sub.className = "muted small"; sub.textContent = [l.name, l.strength].filter(Boolean).join(" · ");
       txt.appendChild(nm); txt.appendChild(sub);
       var q = document.createElement("div"); q.className = "qty qty-sm";
-      var minus = document.createElement("button"); minus.type = "button"; minus.textContent = it.qty > 1 ? "−" : "✕";
+      var minus = document.createElement("button"); minus.type = "button"; minus.className = "q-minus"; minus.textContent = it.qty > 1 ? "−" : "✕";
       minus.setAttribute("aria-label", it.qty > 1 ? x.less : x.remove);
       minus.addEventListener("click", function () { changeItem(it.slug, -1); });
-      var val = document.createElement("span"); val.textContent = it.qty;
+      var val = document.createElement("span"); val.className = "q-val"; val.textContent = it.qty;
       var plus = document.createElement("button"); plus.type = "button"; plus.textContent = "+"; plus.setAttribute("aria-label", x.more);
       plus.addEventListener("click", function () { changeItem(it.slug, 1); });
       q.appendChild(minus); q.appendChild(val); q.appendChild(plus);
@@ -1187,9 +1201,28 @@
   }
   if (EXTRAS) {
     var xs = document.createElement("script");
-    xs.src = "extras.js";
+    xs.src = "extras.js?v=" + (window.V || "");
     document.head.appendChild(xs);
   }
+
+  // iPhone zooms on a quick second tap even with touch-action set, if the page decides it was a double-tap.
+  // Catch a second tap within 350 ms: stop the zoom and press the button ourselves, so every tap counts.
+  var lastTouchEnd = 0, touchFrom = null;
+  document.addEventListener("touchstart", function (e) {
+    touchFrom = e.touches.length === 1 ? [e.touches[0].clientX, e.touches[0].clientY] : null;
+  }, { passive: true });
+  document.addEventListener("touchend", function (e) {
+    var now = Date.now(), quick = now - lastTouchEnd < 350;
+    lastTouchEnd = now;
+    if (!quick || e.touches.length || e.changedTouches.length !== 1 || !touchFrom) return;
+    var c = e.changedTouches[0];
+    if (Math.abs(c.clientX - touchFrom[0]) > 10 || Math.abs(c.clientY - touchFrom[1]) > 10) return;   // a swipe, not a tap
+    var t0 = e.target;
+    if (!t0.closest || t0.closest("input, select, textarea, #map")) return;   // typing and map gestures behave normally
+    e.preventDefault();
+    var btn = t0.closest("button, a, .flavour, [role=button]");
+    if (btn && !btn.disabled) btn.click();
+  }, { passive: false });
 
   // ---------- boot ----------
   $("langBtn").addEventListener("click", function () {

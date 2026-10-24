@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=20261024b">
 </head>
 <body>
 <header class="top">
@@ -246,8 +246,10 @@
   </div>
 </div>
 
-<script src="config.js"></script>
-<script src="layouts.js"></script>
-<script src="app.js"></script>
+<!-- bump V on every update so phones fetch the new files straight away -->
+<script>window.V = "20261024b";</script>
+<script src="config.js?v=20261024b"></script>
+<script src="layouts.js?v=20261024b"></script>
+<script src="app.js?v=20261024b"></script>
 </body>
 </html>
