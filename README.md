@@ -104,7 +104,7 @@ The flavours come from the shop's menu and are set in `config.js`:
 - **`lines`** lists the product lines: Cuba 66 mg/g, Killa 12 mg/g, Iceberg 50 mg/g and Pablo 50 mg/g. Each has a strength and a tin rim colour. When there's more than one line, customers see filter buttons for them.
 - **`products`** lists the flavours. Each one has a line, a name, emoji and a colour.
 
-Without a photo, the page draws a tin in the flavour's colour, with the line name, emoji and strength. To use a real photo, put it in `assets/products/` (square works best) and add `image: "assets/products/<file>"` to that flavour. When stock changes, add, remove or reorder lines in `products`.
+Without a photo, the page draws a tin in the flavour's colour, with the line name, emoji and strength. To use a real photo, put it in `assets/products/` (square works best) and add `image: "assets/products/<file>"` to that flavour. When stock changes, add, remove or reorder lines in `products`. If a flavour is temporarily out, add `soldOut: true` to it. It then shows a "Wyprzedane" (Sold out) sticker at the end of the list, can't be added to the basket, drops out of customers' saved baskets, and "Order again" is disabled for it. Remove `soldOut` when it's back.
 
 ## Branding
 

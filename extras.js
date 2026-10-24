@@ -75,20 +75,24 @@
       S.selectProductBySlug(S.slugOf(ordered));
     }
     orderBox.innerHTML = "";
-    var art = h("div", "x-order-art");
+    var art = h("div", "x-order-art" + (ordered.soldOut ? " x-sold" : ""));
     art.appendChild(S.drawTin(ordered));
     var txt = h("div", "x-order-txt");
     txt.appendChild(h("div", "eyebrow", L("Twoje zamówienie", "Your order")));
     txt.appendChild(h("div", "x-order-name", S.productTitle(ordered)));
     var l = S.lineOf(ordered);
     if (l.strength) txt.appendChild(h("div", "muted small", l.strength));
-    var again = h("a", "x-again", "🔁 " + L("Zamów ponownie", "Order again"));
-    again.href = S.igUrl(); again.target = "_blank"; again.rel = "noopener";
-    again.addEventListener("click", function (e) {
-      e.preventDefault();
-      S.startOrder(S.orderMessageFor(ordered));      // same "order copied" guide as the basket
-    });
-    txt.appendChild(again);
+    if (ordered.soldOut) {                          // can't reorder a sold-out flavour
+      txt.appendChild(h("div", "x-again x-again-off", L("Chwilowo wyprzedane", "Temporarily sold out")));
+    } else {
+      var again = h("a", "x-again", "🔁 " + L("Zamów ponownie", "Order again"));
+      again.href = S.igUrl(); again.target = "_blank"; again.rel = "noopener";
+      again.addEventListener("click", function (e) {
+        e.preventDefault();
+        S.startOrder(S.orderMessageFor(ordered));    // same "order copied" guide as the basket
+      });
+      txt.appendChild(again);
+    }
     orderBox.appendChild(art); orderBox.appendChild(txt);
   }
 
@@ -382,7 +386,7 @@
     S.products().forEach(function (p) {
       var l = S.lineOf(p), g = groups[p.line];
       if (!g) { g = groups[p.line] = h("optgroup"); g.label = (l.name || p.line) + (l.strength ? " · " + l.strength : ""); sel.appendChild(g); }
-      var o = h("option", null, p.name); o.value = S.slugOf(p); g.appendChild(o);
+      var o = h("option", null, p.name + (p.soldOut ? " — " + L("wyprzedane", "sold out") : "")); o.value = S.slugOf(p); g.appendChild(o);
     });
     form.insertBefore(sel, $("mkBtn"));      // between the number and the "Create link" button
   }

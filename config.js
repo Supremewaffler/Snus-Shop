@@ -41,8 +41,10 @@ window.TRACK_CONFIG = {
   //   emoji: shown on the drawn tin
   //   color: the flavour's colour on the drawn tin
   //   image: optional photo in assets/products/ (square works best); replaces the drawn tin
+  //   soldOut: true → shown with a "Wyprzedane" sticker at the end of the list and can't be ordered
+  //            (delete it, or set it back to false, when the flavour is back in stock)
   products: [
-    { line: "cuba",    name: "Cherry",                 emoji: "🍒",   color: "#c2183c" },
+    { line: "cuba",    name: "Cherry",                 emoji: "🍒",   color: "#c2183c", soldOut: true },
     { line: "cuba",    name: "Forest Berries",         emoji: "🌲🫐", color: "#b0306b" },
     { line: "cuba",    name: "Blueberry",              emoji: "🫐",   color: "#3f51b5" },
     { line: "cuba",    name: "Blackcurrant",           emoji: "🫐",   color: "#5a2160" },

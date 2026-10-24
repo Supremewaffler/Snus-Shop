@@ -30,7 +30,7 @@
       errTitle: "Jeszcze nie ruszyliśmy", errNotFound: "InPost nie ma jeszcze informacji o tej przesyłce. Zwykle pojawiają się kilka godzin po nadaniu — strona sama się odświeży.",
       errNet: "Nie udało się połączyć z InPost. Spróbujemy ponownie za chwilę.", errBad: "Ten link wygląda na niepełny. Poproś sprzedawcę o nowy.",
       menuTitle: "Menu", menuText: "Dodaj smaki do koszyka i wyślij zamówienie — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.",
-      add: "Dodaj do koszyka", added: "Dodano {q}× {product} do koszyka", basket: "Koszyk", seeBasket: "Zobacz koszyk",
+      add: "Dodaj do koszyka", soldOut: "Wyprzedane", added: "Dodano {q}× {product} do koszyka", basket: "Koszyk", seeBasket: "Zobacz koszyk",
       send: "Wyślij zamówienie na Instagramie", clear: "Wyczyść koszyk", cleared: "Koszyk wyczyszczony", less: "Mniej", more: "Więcej",
       remove: "Usuń", close: "Zamknij", pcs: "szt.", total: "Razem: {n} szt.",
       basketHead: "Cześć! Chcę zamówić:", basketTotal: "Razem: {n} szt. 🙂",
@@ -65,7 +65,7 @@
       errTitle: "Not on the road yet", errNotFound: "InPost has no information about this parcel yet. It usually appears a few hours after it is sent — this page refreshes by itself.",
       errNet: "Couldn't reach InPost. Trying again shortly.", errBad: "This link looks incomplete. Ask the seller for a new one.",
       menuTitle: "Menu", menuText: "Add flavours to your basket and send the order — the message is copied for you and Instagram opens the chat. Paste it and send.",
-      add: "Add to basket", added: "Added {q}× {product} to the basket", basket: "Basket", seeBasket: "View basket",
+      add: "Add to basket", soldOut: "Sold out", added: "Added {q}× {product} to the basket", basket: "Basket", seeBasket: "View basket",
       send: "Send order on Instagram", clear: "Empty basket", cleared: "Basket emptied", less: "Fewer", more: "More",
       remove: "Remove", close: "Close", pcs: "pcs", total: "Total: {n} pcs",
       basketHead: "Hi! I'd like to order:", basketTotal: "Total: {n} pcs 🙂",
@@ -558,8 +558,10 @@
     setText("lblDest", x.dest); setText("lblHistory", x.history); setText("lblSource", x.source); setText("lblChecked", x.checked);
     setText("lblApprox", x.approx); setText("lblRefresh", x.refresh); setText("lblHint", x.hint);
     setText("lblShopTitle", x.shopTitle); setText("igNote", x.igNote);
-    setText("lblAdd", x.add); setText("lblBasket", x.basket); setText("lblBasketCta", x.seeBasket); setText("igLabel", x.send); setText("basketClear", x.clear);
+    setText("lblBasket", x.basket); setText("lblBasketCta", x.seeBasket); setText("igLabel", x.send); setText("basketClear", x.clear);
     $("qtyMinus").setAttribute("aria-label", x.less); $("qtyPlus").setAttribute("aria-label", x.more); $("basketClose").setAttribute("aria-label", x.close);
+    if (shopList.length) updateAddState(); else setText("lblAdd", x.add);
+    Array.prototype.forEach.call(document.querySelectorAll(".sold-sticker"), function (s2) { s2.textContent = x.soldOut; });
     renderBasket();
     ["gTitle", "gText", "gS1", "gS2", "gS3", "gCopy", "gDone"].forEach(function (k) { setText(k, x[k]); });
     setText("gPasteLbl", x.gPaste); setText("gPh", x.gPh); setText("gOpenLbl", x.gOpen); $("gClose").setAttribute("aria-label", x.close);
@@ -873,6 +875,8 @@
 
   function buildShop() {
     shopList = (CFG.products || []).filter(function (p) { return shopFilter === "all" || p.line === shopFilter; });
+    // sold-out flavours stay visible (with a sticker) but move to the end so the menu opens on something in stock
+    shopList = shopList.filter(function (p) { return !p.soldOut; }).concat(shopList.filter(function (p) { return p.soldOut; }));
     var car = $("carousel"), dots = $("carDots");
     car.innerHTML = ""; dots.innerHTML = "";
     car.classList.toggle("single", shopList.length === 1);
@@ -895,6 +899,11 @@
       note.textContent = [l.name, l.strength].filter(Boolean).join(" · ");
       var badge = document.createElement("span"); badge.className = "in-basket"; badge.setAttribute("data-slug", slugOf(p));
       card.appendChild(badge);
+      if (p.soldOut) {
+        card.classList.add("sold-out");
+        var sticker = document.createElement("span"); sticker.className = "sold-sticker"; sticker.textContent = t().soldOut;
+        card.appendChild(sticker);
+      }
       card.appendChild(art); card.appendChild(name); card.appendChild(note);
       card.addEventListener("click", function () { selectProduct(i, true); });
       car.appendChild(card);
@@ -929,6 +938,15 @@
   }
   function currentProduct() { return shopList[activeProduct]; }
   function updateOrderButton() { setQty(1); }   // each newly picked flavour starts at 1
+  // a sold-out flavour can be looked at but not added
+  function updateAddState() {
+    var p = currentProduct(), out = !!(p && p.soldOut);
+    $("addBtn").disabled = out;
+    $("qtyPlus").disabled = out;
+    $("qtyMinus").disabled = out || pickQty <= 1;
+    setText("lblAdd", out ? t().soldOut : t().add);
+    $("addBtn").classList.toggle("is-sold-out", out);
+  }
   function orderMessageFor(p) {
     var x = t(), l = p ? lineOf(p) : {};
     var what = p ? productTitle(p) + (l.strength ? " (" + l.strength + ")" : "") : "";
@@ -959,7 +977,8 @@
   }
   function loadBasket() {
     try { basket = JSON.parse(localStorage.getItem(BASKET_KEY) || "[]"); } catch (e) { basket = []; }
-    basket = basket.filter(function (it) { return it && productBySlug(it.slug) && it.qty > 0; });   // drop flavours no longer on the menu
+    // drop flavours no longer on the menu or sold out, so they can't be ordered
+    basket = basket.filter(function (it) { var p = it && productBySlug(it.slug); return p && !p.soldOut && it.qty > 0; });
   }
   function saveBasket() { try { localStorage.setItem(BASKET_KEY, JSON.stringify(basket)); } catch (e) {} }
   function basketCount() { return basket.reduce(function (n, it) { return n + it.qty; }, 0); }
@@ -968,7 +987,7 @@
     var last = n % 10, teen = n % 100 >= 12 && n % 100 <= 14;
     return n + (n === 1 ? " smak" : last >= 2 && last <= 4 && !teen ? " smaki" : " smaków");
   }
-  function setQty(q) { pickQty = Math.max(1, Math.min(99, q)); setText("qtyVal", pickQty); $("qtyMinus").disabled = pickQty <= 1; }
+  function setQty(q) { pickQty = Math.max(1, Math.min(99, q)); setText("qtyVal", pickQty); updateAddState(); }
   function changeItem(slug, delta) {
     for (var i = 0; i < basket.length; i++) if (basket[i].slug === slug) {
       basket[i].qty = Math.min(99, basket[i].qty + delta);
@@ -979,7 +998,7 @@
   }
   function addToBasket() {
     var p = currentProduct();
-    if (!p) return;
+    if (!p || p.soldOut) return;
     var slug = slugOf(p), found = false;
     basket.forEach(function (it) { if (it.slug === slug) { it.qty = Math.min(99, it.qty + pickQty); found = true; } });
     if (!found) basket.push({ slug: slug, qty: pickQty });
@@ -994,6 +1013,7 @@
     var lines = [x.basketHead];
     basket.forEach(function (it) {
       var p = productBySlug(it.slug), l = lineOf(p);
+      if (!p || p.soldOut) return;
       lines.push("• " + it.qty + "× " + productTitle(p) + (l.strength ? " (" + l.strength + ")" : ""));
     });
     lines.push(x.basketTotal.replace("{n}", basketCount()));
@@ -1066,6 +1086,7 @@
 
   function setupBasket() {
     loadBasket();
+    saveBasket();      // store the cleaned basket (sold-out / removed flavours gone)
     $("qtyMinus").addEventListener("click", function () { setQty(pickQty - 1); });
     $("qtyPlus").addEventListener("click", function () { setQty(pickQty + 1); });
     $("addBtn").addEventListener("click", addToBasket);

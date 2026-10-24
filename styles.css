@@ -333,6 +333,15 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
   background: var(--accent); color: var(--accent-ink); font-weight: 900; font-size: .8rem; box-shadow: 0 2px 8px rgba(0,0,0,.5);
 }
 .in-basket[hidden] { display: none; }
+.flavour.sold-out .flavour-img { filter: grayscale(1) brightness(.55); }
+.flavour.sold-out .flavour-name, .flavour.sold-out .flavour-note { opacity: .55; }
+.sold-sticker {
+  position: absolute; z-index: 2; top: 34%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
+  padding: 6px 14px; border-radius: 8px; border: 2px solid #ff6b4a; background: rgba(20,8,6,.9);
+  color: #ff8a70; font-weight: 900; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0,0,0,.5); pointer-events: none;
+}
+.add-btn:disabled, .add-btn.is-sold-out { background: var(--card-2); color: var(--muted); border: 1px solid var(--line); cursor: not-allowed; }
 
 /* "Order copied" guide */
 .guide { position: fixed; inset: 0; z-index: 28; background: rgba(0,0,0,.72); display: grid; place-items: center; padding: 16px; overflow: auto; }
