@@ -22,6 +22,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 [hidden] { display: none !important; }
+/* Quick repeated taps (e.g. + + + in the basket) should count as taps, not zoom the page on iPhone.
+   "manipulation" turns off double-tap-to-zoom but keeps scrolling and pinch-zoom. */
+html { touch-action: manipulation; }
+button, a, .qty, .chip-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
 a { color: var(--accent); }
 .top { max-width: 820px; margin: 0 auto; padding: 16px; display: flex; align-items: center; justify-content: space-between; }
 .brand { display: block; line-height: 0; }
