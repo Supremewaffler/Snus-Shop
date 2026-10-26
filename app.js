@@ -30,7 +30,12 @@
       errTitle: "Jeszcze nie ruszyliśmy", errNotFound: "InPost nie ma jeszcze informacji o tej przesyłce. Zwykle pojawiają się kilka godzin po nadaniu — strona sama się odświeży.",
       errNet: "Nie udało się połączyć z InPost. Spróbujemy ponownie za chwilę.", errBad: "Ten link wygląda na niepełny. Poproś sprzedawcę o nowy.",
       menuTitle: "Menu", menuText: "Dodaj smaki do koszyka i wyślij zamówienie — wiadomość skopiuje się sama, a Instagram otworzy czat. Wklej ją i wyślij.",
-      add: "Dodaj do koszyka", soldOut: "Wyprzedane", added: "Dodano {q}× {product} do koszyka", basket: "Koszyk", seeBasket: "Zobacz koszyk",
+      add: "Dodaj do koszyka", soldOut: "Wyprzedane",
+      ageTitle: "Masz ukończone 18 lat?", ageText: "Sprzedajemy wyroby z nikotyną wyłącznie osobom pełnoletnim. Potwierdź swój wiek, aby zobaczyć smaki i złożyć zamówienie.",
+      ageYes: "Tak, mam 18 lat", ageNo: "Nie", ageNoMsg: "Przepraszamy — ta część strony jest tylko dla osób pełnoletnich.",
+      ageWarn: "Ten produkt zawiera nikotynę, która jest substancją silnie uzależniającą.",
+      nicWarn: "Ten produkt zawiera nikotynę, która jest substancją silnie uzależniającą. Sprzedaż wyłącznie osobom pełnoletnim (18+).",
+      ageLockTitle: "Smaki i zamówienia", ageLockText: "Tylko dla osób pełnoletnich.", ageOpen: "Pokaż smaki (18+)", ageLockNo: "Ta część strony jest tylko dla osób pełnoletnich.", added: "Dodano {q}× {product} do koszyka", basket: "Koszyk", seeBasket: "Zobacz koszyk",
       send: "Wyślij zamówienie na Instagramie", clear: "Wyczyść koszyk", cleared: "Koszyk wyczyszczony", less: "Mniej", more: "Więcej",
       remove: "Usuń", close: "Zamknij", pcs: "szt.", total: "Razem: {n} szt.",
       basketHead: "Cześć! Chcę zamówić:", basketTotal: "Razem: {n} szt. 🙂",
@@ -65,7 +70,12 @@
       errTitle: "Not on the road yet", errNotFound: "InPost has no information about this parcel yet. It usually appears a few hours after it is sent — this page refreshes by itself.",
       errNet: "Couldn't reach InPost. Trying again shortly.", errBad: "This link looks incomplete. Ask the seller for a new one.",
       menuTitle: "Menu", menuText: "Add flavours to your basket and send the order — the message is copied for you and Instagram opens the chat. Paste it and send.",
-      add: "Add to basket", soldOut: "Sold out", added: "Added {q}× {product} to the basket", basket: "Basket", seeBasket: "View basket",
+      add: "Add to basket", soldOut: "Sold out",
+      ageTitle: "Are you 18 or over?", ageText: "We only sell nicotine products to adults. Please confirm your age to see the flavours and order.",
+      ageYes: "Yes, I'm 18 or over", ageNo: "No", ageNoMsg: "Sorry — this part of the site is for adults only.",
+      ageWarn: "This product contains nicotine which is a highly addictive substance.",
+      nicWarn: "This product contains nicotine which is a highly addictive substance. Sold to adults (18+) only.",
+      ageLockTitle: "Flavours and orders", ageLockText: "Adults only.", ageOpen: "Show flavours (18+)", ageLockNo: "This part of the site is for adults only.", added: "Added {q}× {product} to the basket", basket: "Basket", seeBasket: "View basket",
       send: "Send order on Instagram", clear: "Empty basket", cleared: "Basket emptied", less: "Fewer", more: "More",
       remove: "Remove", close: "Close", pcs: "pcs", total: "Total: {n} pcs",
       basketHead: "Hi! I'd like to order:", basketTotal: "Total: {n} pcs 🙂",
@@ -562,6 +572,9 @@
     $("qtyMinus").setAttribute("aria-label", x.less); $("qtyPlus").setAttribute("aria-label", x.more); $("basketClose").setAttribute("aria-label", x.close);
     if (shopList.length) updateAddState(); else setText("lblAdd", x.add);
     Array.prototype.forEach.call(document.querySelectorAll(".sold-sticker"), function (s2) { s2.textContent = x.soldOut; });
+    ["ageTitle", "ageText", "ageYes", "ageNo", "ageNoMsg", "ageWarn", "nicWarn", "ageLockTitle", "ageOpen"].forEach(function (k) { setText(k, x[k]); });
+    setText("ageLockText", ageSaidNo() ? x.ageLockNo : x.ageLockText);
+    setText("ageLang", lang === "pl" ? "EN" : "PL");
     renderBasket();
     ["gTitle", "gText", "gS1", "gS2", "gS3", "gCopy", "gDone"].forEach(function (k) { setText(k, x[k]); });
     setText("gPasteLbl", x.gPaste); setText("gPh", x.gPh); setText("gOpenLbl", x.gOpen); $("gClose").setAttribute("aria-label", x.close);
@@ -681,7 +694,7 @@
       $("dest").hidden = true;
     }
 
-    $("shopCard").hidden = !(CFG.products && CFG.products.length);
+    applyShopVisibility();
     renderBasket();
 
     var ol = $("history");
@@ -1130,14 +1143,61 @@
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 3500);
   }
 
+  // ---------- 18+ confirmation ----------
+  // Flavours and ordering are only shown after the visitor confirms they are 18+.
+  // "Yes" is remembered on this phone for ageGateDays; "No" for this visit. Tracking itself is never locked.
+  var AGE_KEY = "snus-age-ok", AGE_NO = "snus-age-no", menuMode = false;
+  function ageOk() {
+    if (CFG.ageGate === false) return true;
+    try {
+      var at = +localStorage.getItem(AGE_KEY);
+      return at > 0 && Date.now() - at < (CFG.ageGateDays || 30) * 864e5;
+    } catch (e) { return false; }
+  }
+  function ageSaidNo() { try { return sessionStorage.getItem(AGE_NO) === "1"; } catch (e) { return false; } }
+  function applyShopVisibility() {
+    var has = !!(CFG.products && CFG.products.length);
+    var onPage = menuMode || !$("trackView").hidden;
+    $("shopCard").hidden = !has || !ageOk();
+    $("ageLock").hidden = !has || !onPage || ageOk();
+    $("ageOpen").hidden = ageSaidNo();
+    setText("ageLockText", ageSaidNo() ? t().ageLockNo : t().ageLockText);
+    renderBasket();
+  }
+  function openAgeGate() {
+    $("ageBtns").hidden = false; $("ageNoMsg").hidden = true;
+    $("ageGate").hidden = false;
+    document.body.classList.add("sheet-open");
+  }
+  function closeAgeGate() { $("ageGate").hidden = true; document.body.classList.remove("sheet-open"); }
+  function setupAgeGate() {
+    $("ageOpen").addEventListener("click", openAgeGate);
+    $("ageLang").addEventListener("click", function () { $("langBtn").click(); });   // switch language without answering first
+    $("ageYes").addEventListener("click", function () {
+      try { localStorage.setItem(AGE_KEY, String(Date.now())); sessionStorage.removeItem(AGE_NO); } catch (e) {}
+      closeAgeGate();
+      applyShopVisibility();
+      selectProduct(activeProduct, false);
+    });
+    $("ageNo").addEventListener("click", function () {
+      try { sessionStorage.setItem(AGE_NO, "1"); } catch (e) {}
+      $("ageBtns").hidden = true; $("ageNoMsg").hidden = false;
+      applyShopVisibility();
+      setTimeout(closeAgeGate, 2500);
+    });
+  }
+
   // ---------- menu page ----------
   function setupMenu() {
     show("menuView");
     Array.prototype.forEach.call(document.querySelectorAll("#menuView img[data-src]"), function (img) { img.src = img.getAttribute("data-src"); });
     var shop = $("shopCard");
+    $("menuView").appendChild($("ageLock"));
     $("menuView").appendChild(shop);         // same flavour section as on the tracking page
-    shop.hidden = false;
+    menuMode = true;
     setupShop();
+    applyShopVisibility();
+    if (!ageOk() && !ageSaidNo()) openAgeGate();   // the menu asks straight away
     renderBasket();
     document.title = t().menuTitle + " · " + CFG.brandName;
   }
@@ -1255,6 +1315,7 @@
   if (routeColor) ["--r-done", "--r-todo", "--r-glow"].forEach(function (v) { $("mapWrap").style.setProperty(v, routeColor); });
 
   applyStaticText();
+  setupAgeGate();
   if (isMenu) { setupMenu(); return; }
   if (!number) { setupMaker(); return; }
   if (number.length < 6 && !isDemo) { showError("bad"); return; }

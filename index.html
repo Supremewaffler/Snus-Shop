@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="styles.css?v=20261024b">
+<link rel="stylesheet" href="styles.css?v=20261026a">
 </head>
 <body>
 <header class="top">
@@ -108,6 +108,16 @@
       </div>
     </div>
 
+    <!-- shown instead of the flavours until the visitor confirms they are 18+ -->
+    <section id="ageLock" class="card age-lock" hidden>
+      <div class="age-badge">18+</div>
+      <div class="age-lock-txt">
+        <h2 id="ageLockTitle">Smaki i zamówienia</h2>
+        <p id="ageLockText" class="muted">Tylko dla osób pełnoletnich.</p>
+        <button type="button" id="ageOpen" class="add-btn age-open">Pokaż smaki (18+)</button>
+      </div>
+    </section>
+
     <section id="shopCard" class="card shop" hidden>
       <div class="shop-head">
         <div>
@@ -132,6 +142,7 @@
         </div>
         <button type="button" id="addBtn" class="add-btn">🧺 <span id="lblAdd">Dodaj do koszyka</span></button>
       </div>
+      <p id="nicWarn" class="nic-warn">Ten produkt zawiera nikotynę, która jest substancją silnie uzależniającą. Sprzedaż wyłącznie osobom pełnoletnim (18+).</p>
     </section>
 
     <div class="card">
@@ -213,6 +224,22 @@
   </div>
 </div>
 
+<!-- 18+ question -->
+<div id="ageGate" class="guide" hidden role="dialog" aria-modal="true" aria-labelledby="ageTitle">
+  <div class="guide-panel age-panel">
+    <button type="button" id="ageLang" class="chip-btn guide-close">EN</button>
+    <div class="age-badge age-badge-lg">18+</div>
+    <h2 id="ageTitle">Masz ukończone 18 lat?</h2>
+    <p id="ageText" class="muted">Sprzedajemy wyroby z nikotyną wyłącznie osobom pełnoletnim. Potwierdź swój wiek, aby zobaczyć smaki i złożyć zamówienie.</p>
+    <div id="ageBtns" class="age-btns">
+      <button type="button" id="ageYes" class="add-btn">Tak, mam 18 lat</button>
+      <button type="button" id="ageNo" class="chip-btn age-no-btn">Nie</button>
+    </div>
+    <p id="ageNoMsg" class="age-no" hidden>Przepraszamy — ta część strony jest tylko dla osób pełnoletnich.</p>
+    <p id="ageWarn" class="x-note">Ten produkt zawiera nikotynę, która jest substancją silnie uzależniającą.</p>
+  </div>
+</div>
+
 <!-- Shown after tapping "send": Instagram can't pre-fill a DM, so explain the paste step -->
 <div id="guide" class="guide" hidden role="dialog" aria-modal="true" aria-labelledby="gTitle">
   <div class="guide-panel">
@@ -247,9 +274,9 @@
 </div>
 
 <!-- bump V on every update so phones fetch the new files straight away -->
-<script>window.V = "20261024b";</script>
-<script src="config.js?v=20261024b"></script>
-<script src="layouts.js?v=20261024b"></script>
-<script src="app.js?v=20261024b"></script>
+<script>window.V = "20261026a";</script>
+<script src="config.js?v=20261026a"></script>
+<script src="layouts.js?v=20261026a"></script>
+<script src="app.js?v=20261026a"></script>
 </body>
 </html>

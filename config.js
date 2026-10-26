@@ -25,6 +25,10 @@ window.TRACK_CONFIG = {
   autoNight: true,             // switch the map to the night style after sunset
   analytics: false,            // Vercel Web Analytics — enable it in the Vercel dashboard first
 
+  // 18+ confirmation before the flavours and ordering are shown (tracking is never locked).
+  ageGate: true,
+  ageGateDays: 30,             // how long a "yes" is remembered on the customer's phone
+
   // Instagram account customers are sent to from the flavour carousel.
   instagram: "snus.shop24",
 

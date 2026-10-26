@@ -25,6 +25,17 @@ New parcels can take a few hours to appear at InPost. Until then the page says s
 
 Link previews (Instagram, WhatsApp, Messenger) use `assets/og.jpg`.
 
+## 18+ confirmation
+
+The flavours, basket and ordering only show after the visitor taps **"Tak, mam 18 lat"** (Yes, I'm 18). On `/menu` the question appears straight away; on tracking pages the parcel tracking stays open and only the flavour section is locked, behind **"Pokaż smaki (18+)"** (Show flavours, 18+).
+
+- **"Yes"** is remembered on the phone for `ageGateDays` (30) days.
+- **"No"** keeps the flavours hidden for that visit.
+- **The EU nicotine warning** is shown with the question and under the flavours.
+- **Turning it off:** set `ageGate: false` in `config.js`.
+
+This is a self-declaration, not an ID check.
+
 ## The map
 
 The page shows a dark, game-style city map with four pins: **Warehouse — dispatch → InPost sorting hub → Local depot → your Paczkomat / home**. A courier on a moped drives along the glowing route between them:

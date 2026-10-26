@@ -347,6 +347,24 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 }
 .add-btn:disabled, .add-btn.is-sold-out { background: var(--card-2); color: var(--muted); border: 1px solid var(--line); cursor: not-allowed; }
 
+/* 18+ confirmation */
+.age-badge {
+  width: 52px; height: 52px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  border: 3px solid #ff6b4a; color: #ff8a70; font-weight: 900; font-size: 1rem; letter-spacing: -.02em;
+}
+.age-badge-lg { width: 72px; height: 72px; font-size: 1.4rem; margin: 0 auto 10px; }
+.age-lock { display: flex; gap: 16px; align-items: center; }
+.age-lock h2 { margin: 0 0 2px; }
+.age-lock p { margin: 0 0 10px; }
+.age-open { padding: 12px 18px; }
+.age-panel > p { margin-bottom: 16px; }
+.age-btns { display: grid; gap: 8px; }
+.age-btns .add-btn { padding: 14px 18px; font-size: 1.05rem; }
+.age-no-btn { justify-content: center; padding: 12px 18px; font-size: .95rem; }
+.age-no { color: #ff8a70; font-weight: 700; }
+.age-btns[hidden], .age-no[hidden], .age-open[hidden] { display: none; }
+.nic-warn { margin: 12px 0 0; font-size: .75rem; line-height: 1.4; color: var(--muted); text-align: center; }
+
 /* "Order copied" guide */
 .guide { position: fixed; inset: 0; z-index: 28; background: rgba(0,0,0,.72); display: grid; place-items: center; padding: 16px; overflow: auto; }
 .guide[hidden] { display: none; }
