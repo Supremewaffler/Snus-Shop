@@ -2,6 +2,8 @@
   "use strict";
 
   var CFG = Object.assign({ brandName: "Snus Shop 24", refreshSeconds: 60, defaultLang: "pl", instagram: "snus.shop24", products: [] }, window.TRACK_CONFIG || {});
+  // menu.js (edited by hand or by the Telegram bot) provides the product lines and flavours
+  if (window.MENU) { CFG.lines = window.MENU.lines || {}; CFG.products = window.MENU.products || []; }
   var API = "https://api-shipx-pl.easypack24.net/v1";
   var SVGNS = "http://www.w3.org/2000/svg";
 

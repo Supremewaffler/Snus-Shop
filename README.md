@@ -110,12 +110,12 @@ Under the pickup point, customers see a **Popularne smaki / Popular flavours** c
 
 Below it, the **Zamów … na Instagramie** button opens a chat with the shop's Instagram account (`ig.me/m/snus.shop24`). Instagram doesn't let websites pre-fill a DM, so the page copies a ready-made order message when the button is tapped, and the customer pastes it into the chat. The message names the chosen flavour and includes the customer's last parcel number, so it's easy to see who's ordering.
 
-The flavours come from the shop's menu and are set in `config.js`:
+The flavours come from the shop's menu and are set in **`menu.js`**. Edit it by hand, or let the seller update it from Telegram with the **Snus Shop 24 bot** (see [TELEGRAM-BOT.md](TELEGRAM-BOT.md)). `menu.js` holds:
 
 - **`lines`** lists the product lines: Cuba 66 mg/g, Killa 12 mg/g, Iceberg 50 mg/g and Pablo 50 mg/g. Each has a strength and a tin rim colour. When there's more than one line, customers see filter buttons for them.
 - **`products`** lists the flavours. Each one has a line, a name, emoji and a colour.
 
-Without a photo, the page draws a tin in the flavour's colour, with the line name, emoji and strength. To use a real photo, put it in `assets/products/` (square works best) and add `image: "assets/products/<file>"` to that flavour. When stock changes, add, remove or reorder lines in `products`. If a flavour is temporarily out, add `soldOut: true` to it. It then shows a "Wyprzedane" (Sold out) sticker at the end of the list, can't be added to the basket, drops out of customers' saved baskets, and "Order again" is disabled for it. Remove `soldOut` when it's back.
+Without a photo, the page draws a tin in the flavour's colour, with the line name, emoji and strength. To use a real photo, put it in `assets/products/` (square works best) and add `image: "assets/products/<file>"` to that flavour. When stock changes, add, remove or reorder lines in `products` (or send `/menu` to the bot). If a flavour is temporarily out, add `"soldOut": true` to it (or send `/wyprzedane <name>` to the bot). It then shows a "Wyprzedane" (Sold out) sticker at the end of the list, can't be added to the basket, drops out of customers' saved baskets, and "Order again" is disabled for it. Remove `soldOut` when it's back.
 
 ## Branding
 
@@ -130,6 +130,10 @@ The Snus Shop 24 artwork lives in `assets/`:
 - `rider-large.webp`: the bigger rider on the link-maker page
 
 To update the artwork, replace these files with new versions of the same size. Phones keep files from `assets/` for up to a week (see `vercel.json`), so give a changed image a new file name (e.g. `rider-2.webp`) and update the reference to it. Otherwise returning customers may keep seeing the old one.
+
+## Telegram bot
+
+`api/telegram.js` is a Vercel serverless function. Telegram sends the bot's messages to it, and it saves menu changes to `menu.js` in this repository through the GitHub API, after which Vercel redeploys the site. `api/_menu.js` reads the seller's menu text. Setup and commands are in [TELEGRAM-BOT.md](TELEGRAM-BOT.md). The bot commits to the main branch, so pull before making your own changes.
 
 ## Updating the site
 
