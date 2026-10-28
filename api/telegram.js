@@ -180,7 +180,7 @@ function onCallback(cq) {
   if (data === "pub") {
     var orig = msg.reply_to_message;
     if (!orig || !orig.text) return done.then(function () { return edit(msg, "Nie widzę już wiadomości z menu — wyślij /menu jeszcze raz."); });
-    return done.then(readMenu).then(function (cur) {
+    return done.then(function () { return readMenu(); }).then(function (cur) {
       var parsed = M.parseMenu(orig.text, cur.menu);
       if (!parsed.menu.products.length) return edit(msg, "Nie rozpoznałem menu — wyślij /menu jeszcze raz.");
       return writeMenu(parsed.menu, cur.sha, "Telegram: new menu (" + who(cq.from) + ")").then(function () {
@@ -190,7 +190,7 @@ function onCallback(cq) {
   }
   var m = data.match(/^(so|av):(.+)$/);
   if (m) {
-    return done.then(readMenu).then(function (cur) {
+    return done.then(function () { return readMenu(); }).then(function (cur) {
       var p = cur.menu.products.filter(function (x) { return M.slugOf(x).slice(0, 60) === m[2]; })[0];
       if (!p) return edit(msg, "Tego smaku nie ma już w menu.");
       return setStock(msg, cur.menu, cur.sha, p, m[1] === "so", cq.from, true);
