@@ -105,7 +105,8 @@ window.MENU = {
       "line": "iceberg",
       "name": "Black",
       "emoji": "🧊",
-      "color": "#59606b"
+      "color": "#59606b",
+      "soldOut": true
     },
     {
       "line": "pablo",
