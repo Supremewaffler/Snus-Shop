@@ -113,7 +113,8 @@ window.MENU = {
       "line": "pablo",
       "name": "Exclusive Frosted Mint",
       "emoji": "🌿",
-      "color": "#26c6a6"
+      "color": "#26c6a6",
+      "soldOut": true
     }
   ]
 };
