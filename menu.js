@@ -89,7 +89,8 @@ window.MENU = {
       "line": "cuba",
       "name": "Ice Spearmint",
       "emoji": "🌿",
-      "color": "#2ec4b6"
+      "color": "#2ec4b6",
+      "soldOut": true
     },
     {
       "line": "killa",
