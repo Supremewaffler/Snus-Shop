@@ -39,7 +39,8 @@ window.MENU = {
       "line": "cuba",
       "name": "Forest Berries",
       "emoji": "🌲🫐",
-      "color": "#b0306b"
+      "color": "#b0306b",
+      "soldOut": true
     },
     {
       "line": "cuba",
