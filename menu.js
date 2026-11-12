@@ -2,128 +2,61 @@
 // Keep everything after window.MENU = valid JSON (double quotes, no comments, no trailing commas).
 window.MENU = {
   "lines": {
-    "cuba": {
-      "name": "Cuba",
-      "short": "CUBA",
-      "strength": "66 mg/g",
+    "cuba-66-g": {
+      "name": "Cuba —66/g",
+      "short": "CUBA —66/G",
+      "strength": "",
       "rim": "#d9d9de"
-    },
-    "killa": {
-      "name": "Killa",
-      "short": "KILLA",
-      "strength": "12 mg/g",
-      "rim": "#ff5fa2"
-    },
-    "iceberg": {
-      "name": "Iceberg",
-      "short": "ICEBERG",
-      "strength": "50 mg/g",
-      "rim": "#8fd8ff"
-    },
-    "pablo": {
-      "name": "Pablo",
-      "short": "PABLO",
-      "strength": "50 mg/g",
-      "rim": "#d8b45a"
     }
   },
   "products": [
     {
-      "line": "cuba",
+      "line": "cuba-66-g",
+      "name": "Watermelon",
+      "emoji": "🍉",
+      "color": "#ff5d73"
+    },
+    {
+      "line": "cuba-66-g",
+      "name": "Raspberry",
+      "emoji": "🩷",
+      "color": "#3d7bff"
+    },
+    {
+      "line": "cuba-66-g",
       "name": "Cherry",
       "emoji": "🍒",
-      "color": "#c2183c",
-      "soldOut": true
+      "color": "#c2183c"
     },
     {
-      "line": "cuba",
-      "name": "Forest Berries",
-      "emoji": "🌲🫐",
-      "color": "#b0306b",
-      "soldOut": true
+      "line": "cuba-66-g",
+      "name": "Double Fresh",
+      "emoji": "❄️",
+      "color": "#7fd3ff"
     },
     {
-      "line": "cuba",
-      "name": "Blueberry",
-      "emoji": "🫐",
-      "color": "#3f51b5",
-      "soldOut": true
+      "line": "cuba-66-g",
+      "name": "Ice Spearmint",
+      "emoji": "🌿",
+      "color": "#2ec4b6"
     },
     {
-      "line": "cuba",
-      "name": "Blackcurrant",
-      "emoji": "🫐",
-      "color": "#5a2160",
-      "soldOut": true
+      "line": "cuba-66-g",
+      "name": "Grape",
+      "emoji": "🍇",
+      "color": "#8e44ad"
     },
     {
-      "line": "cuba",
+      "line": "cuba-66-g",
       "name": "Apple Juice",
       "emoji": "🍏",
       "color": "#6fb83a"
     },
     {
-      "line": "cuba",
-      "name": "Grape",
-      "emoji": "🍇",
-      "color": "#8e44ad",
-      "soldOut": true
-    },
-    {
-      "line": "cuba",
-      "name": "Banana Hit",
-      "emoji": "🔥",
-      "color": "#e8b923",
-      "soldOut": true
-    },
-    {
-      "line": "cuba",
-      "name": "Blackberry",
+      "line": "cuba-66-g",
+      "name": "Blackcurrant",
       "emoji": "🫐",
-      "color": "#4b2a6b",
-      "soldOut": true
-    },
-    {
-      "line": "cuba",
-      "name": "Pineapple",
-      "emoji": "🍍",
-      "color": "#f2a93b",
-      "soldOut": true
-    },
-    {
-      "line": "cuba",
-      "name": "Ice Spearmint",
-      "emoji": "🌿",
-      "color": "#2ec4b6",
-      "soldOut": true
-    },
-    {
-      "line": "killa",
-      "name": "Grape Ice",
-      "emoji": "🍇",
-      "color": "#9b59b6",
-      "soldOut": true
-    },
-    {
-      "line": "iceberg",
-      "name": "Grape",
-      "emoji": "🍇",
-      "color": "#8e44ad",
-      "soldOut": true
-    },
-    {
-      "line": "iceberg",
-      "name": "Black",
-      "emoji": "🧊",
-      "color": "#59606b",
-      "soldOut": true
-    },
-    {
-      "line": "pablo",
-      "name": "Exclusive Frosted Mint",
-      "emoji": "🌿",
-      "color": "#26c6a6",
-      "soldOut": true
+      "color": "#3f51b5"
     }
   ]
 };
