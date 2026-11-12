@@ -25,7 +25,8 @@ var SECRET = TOKEN ? crypto.createHash("sha256").update("snus-webhook:" + TOKEN)
 var HELP = [
   "🛵 Snus Shop 24 — menu na stronie",
   "",
-  "/menu + Twoje menu w kolejnych liniach — podmienia całe menu (najpierw pokażę podgląd do zatwierdzenia)",
+  "/nowemenu — wklej nowe menu (tak jak na Instagramie), pokażę podgląd do zatwierdzenia",
+  "   albo od razu: /menu + menu w kolejnych liniach",
   "   📍 CUBA — 66 mg/g",
   "   🍒 Cherry",
   "   🍇 Grape",
@@ -88,12 +89,28 @@ function previewText(cur, parsed) {
   return out.join("\n");
 }
 
-function menuCommand(msg, text) {
+// "New menu": ask for the menu as a reply, so it can be pasted in a separate message
+var PROMPT = "📝 Wklej nowe menu";
+function askForMenu(msg) {
+  return readMenu().then(function (cur) {
+    return tg("sendMessage", {
+      chat_id: msg.chat.id, reply_to_message_id: msg.message_id, allow_sending_without_reply: true,
+      text: PROMPT + " w odpowiedzi na tę wiadomość — tak jak je wrzucasz na Instagram.\n" +
+        "Pokażę, co się zmieni (nowe, usunięte, wyprzedane smaki), zanim cokolwiek trafi na stronę.\n\n" +
+        "Teraz na stronie: " + cur.menu.products.length + " smaków (/pokaz).",
+      reply_markup: { force_reply: true, selective: true, input_field_placeholder: "Wklej tutaj menu…" }
+    });
+  });
+}
+function isMenuPrompt(m) { return !!(m && m.from && m.from.is_bot && (m.text || "").indexOf(PROMPT) === 0); }
+
+function menuCommand(msg, text, pasted) {
   var body = text.replace(/^\/\w+(@\w+)?/, "").trim();
-  if (!body) return showMenu(msg);
+  if (!body) return askForMenu(msg);
   return readMenu().then(function (cur) {
     var parsed = M.parseMenu(text, cur.menu);
     if (!parsed.menu.products.length) {
+      if (pasted === "quiet") return null;            // ordinary chat in private, not a menu
       return reply(msg, "Nie rozpoznałem menu 🤔 Każda marka w osobnej linii z mocą, np. „📍 CUBA — 66 mg/g”, a pod nią smaki — jeden w linii.\n\n" + HELP);
     }
     // the preview replies to the seller's message, so "Publish" can read the menu from it again (no storage needed)
@@ -153,7 +170,15 @@ function myName() { if (!me) me = tg("getMe", {}).then(function (r) { return ((r
 
 function onMessage(msg) {
   var text = (msg.text || "").trim();
-  if (text[0] !== "/") return null;                    // only commands
+  if (text && text[0] !== "/") {
+    // a pasted menu: a reply to "Wklej nowe menu", or (in a private chat) any message with a menu in it
+    var prompted = isMenuPrompt(msg.reply_to_message);
+    if (!prompted && msg.chat.type !== "private") return null;
+    if (!allowed(msg.from)) return prompted ? reply(msg, "Nie masz dostępu do zmiany menu.") : null;
+    if (/^📝?\s*nowe\s+menu\s*$/iu.test(text)) return askForMenu(msg);
+    return menuCommand(msg, text, prompted ? "prompted" : "quiet");
+  }
+  if (!text) return null;
   var at = (text.split(/\s/)[0].split("@")[1] || "").toLowerCase();
   if (at) return myName().then(function (name) { return at === name ? handleCommand(msg, text) : null; });
   return handleCommand(msg, text);
@@ -165,6 +190,7 @@ function handleCommand(msg, text) {
   if (!ALLOWED.length) return reply(msg, "Bot nie ma jeszcze ustawionych osób z dostępem (ALLOWED_USERS w Vercel). Wyślij /id, żeby poznać swój numer.");
   if (!allowed(msg.from)) return reply(msg, "Nie masz dostępu do zmiany menu.");
   if (cmd === "/menu") return menuCommand(msg, text);
+  if (cmd === "/nowemenu" || cmd === "/nowe") return askForMenu(msg);
   if (cmd === "/pokaz" || cmd === "/pokaż") return showMenu(msg);
   if (cmd === "/wyprzedane" || cmd === "/wyprzedany") return stockCommand(msg, text, true);
   if (cmd === "/dostepne" || cmd === "/dostępne" || cmd === "/dostepny") return stockCommand(msg, text, false);
@@ -204,7 +230,8 @@ function setup(req) {
   return Promise.all([
     tg("setWebhook", { url: url, secret_token: SECRET, allowed_updates: ["message", "callback_query"], drop_pending_updates: true }),
     tg("setMyCommands", { commands: [
-      { command: "menu", description: "Nowe menu (wklej je pod komendą)" },
+      { command: "nowemenu", description: "📝 Nowe menu — wklej je, pokażę podgląd" },
+      { command: "menu", description: "Nowe menu w tej samej wiadomości" },
       { command: "wyprzedane", description: "Oznacz smak jako wyprzedany" },
       { command: "dostepne", description: "Smak znów dostępny" },
       { command: "pokaz", description: "Aktualne menu na stronie" },

@@ -77,6 +77,7 @@ In the group: **Add members** → search for the bot's username → add it. In a
 
 | Send | What happens |
 |---|---|
+| `/nowemenu` (or tap **Menu → nowemenu**, or type `nowe menu`) | The bot asks you to paste the new menu. Paste it as the next message, exactly as it's posted on Instagram, and you get the same **preview** as below. In a private chat with the bot you can also just paste a menu without any command. |
 | `/menu` followed by the menu on the next lines | Shows a **preview** of the new menu and what changes. Tap **✅ Opublikuj** (Publish) to put it on the site, or **❌ Anuluj** (Cancel). |
 | `/wyprzedane cherry` | Marks Cherry as sold out (sticker on the site, can't be ordered). |
 | `/dostepne cherry` | Cherry is available again. |
