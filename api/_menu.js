@@ -9,8 +9,19 @@ var EMOJI_COLORS = {
   "🍋": "#e8c547", "🥭": "#ffa726", "🍍": "#f2a93b", "🍌": "#e8c547", "🥝": "#7cc242", "🍉": "#ff5d73",
   "🍑": "#ff9a76", "🍊": "#ff8c1a", "🥥": "#cfa77a", "🌿": "#2ec4b6", "🌱": "#3fbf7f", "🍃": "#2ec4b6",
   "❄️": "#7fd3ff", "❄": "#7fd3ff", "🧊": "#59606b", "🖤": "#5a2160", "🥤": "#b5651d", "🌴": "#2e9d63",
-  "🌲": "#b0306b", "🔥": "#e8b923", "🍬": "#ff6fb5", "☕": "#7b4a2e", "🍫": "#6b3e26", "🌸": "#ff8fc7"
+  "🌲": "#b0306b", "🔥": "#e8b923", "🍬": "#ff6fb5", "☕": "#7b4a2e", "🍫": "#6b3e26", "🌸": "#ff8fc7",
+  "🩷": "#e0307a", "💗": "#e0307a", "💖": "#e0307a", "❤️": "#d63031", "❤": "#d63031", "💜": "#8e44ad", "💙": "#3f51b5",
+  "💚": "#3fbf7f", "💛": "#e8c547", "🧡": "#ff8c1a", "🤍": "#c9ced6", "🍐": "#a8c64a", "🍈": "#9fd36b", "🫒": "#7a8a3a",
+  "🍦": "#e8d8b8", "🍯": "#e0a020", "🥥": "#cfa77a", "🌶️": "#e5484d", "🌶": "#e5484d", "🍹": "#ff7a59", "🥃": "#b5651d"
 };
+// …or from the flavour's name, when the emoji doesn't say (🩷 Raspberry, ✨ Mango)
+var NAME_COLORS = [
+  [/raspberr|malin/, "#e0307a"], [/strawberr|truskaw/, "#e0314b"], [/cherr|wiśn|wisn/, "#c2183c"], [/watermelon|arbuz/, "#ff5d73"],
+  [/blueberr|jagod|borówk|borowk/, "#3f51b5"], [/blackcurrant|porzecz/, "#5a2160"], [/blackberr|jeżyn|jezyn/, "#4b2a6b"],
+  [/grape|winogr/, "#8e44ad"], [/apple|jabłk|jablk/, "#6fb83a"], [/lemon|lime|cytryn|limon/, "#e8c547"], [/mango/, "#ffa726"],
+  [/pineapple|ananas/, "#f2a93b"], [/banana|banan/, "#e8c547"], [/peach|brzoskw/, "#ff9a76"], [/orange|pomarań|pomaran/, "#ff8c1a"],
+  [/kiwi/, "#7cc242"], [/cola/, "#b5651d"], [/coffee|kaw/, "#7b4a2e"], [/mint|spearmint|frost|fresh|ice|mięt|miet/, "#2ec4b6"]
+];
 var SPARE_COLORS = ["#b06cff", "#ff6f61", "#3d7bff", "#26c6a6", "#ffb347", "#9b59b6", "#5b6cff", "#c2183c"];
 var RIM_COLORS = ["#d9d9de", "#ff5fa2", "#8fd8ff", "#d8b45a", "#7cdc9b", "#b39cff", "#ff9f43", "#e5484d"];
 
@@ -35,14 +46,19 @@ function hashColor(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 3
 function colorFor(emoji, name) {
   var chars = Array.from(emoji || "");
   for (var i = 0; i < chars.length; i++) if (EMOJI_COLORS[chars[i]]) return EMOJI_COLORS[chars[i]];
+  var n = String(name).toLowerCase();
+  for (var j = 0; j < NAME_COLORS.length; j++) if (NAME_COLORS[j][0].test(n)) return NAME_COLORS[j][1];
   return hashColor(name);
 }
 
-// "📍 CUBA — 66 mg/g" → { name: "CUBA", strength: "66 mg/g" }; null if the line isn't a brand header
+// "📍 CUBA — 66 mg/g" → { name: "CUBA", strength: "66 mg/g" }; null if the line isn't a brand header.
+// The strength may also be written "66mg", "66/g", "66 mg/g", or "66g" / "66" after a 📍.
 function header(line) {
   var hasPin = line.indexOf("📍") >= 0;
   var clean = line.replace(/📍/g, "").trim();
-  var m = clean.match(/^(.*?)[\s:—–-]*(\d+(?:[.,]\d+)?)\s*mg\s*(?:\/\s*g)?\s*$/i);
+  if (!hasPin && EMOJI_RUN.test(clean)) return null;   // "🍏 Apple 2/g" is a flavour, not a brand
+  var unit = hasPin ? "(?:mg\\s*(?:\\/\\s*g)?|\\/\\s*g|g)?" : "(?:mg\\s*(?:\\/\\s*g)?|\\/\\s*g)";
+  var m = clean.match(new RegExp("^(.*?)[\\s:—–-]*(\\d+(?:[.,]\\d+)?)\\s*" + unit + "\\s*$", "i"));
   if (m && m[1].trim()) return { name: m[1].replace(/[\s:—–-]+$/, "").trim(), strength: m[2].replace(",", ".") + " mg/g" };
   if (hasPin && clean) return { name: clean.replace(/[\s:—–-]+$/, ""), strength: "" };
   return null;
@@ -103,6 +119,7 @@ function parseMenu(text, current) {
     products.push(p);
   });
 
+  Object.keys(lines).forEach(function (k) { if (!lines[k].strength) warnings.push("Brak mocy przy marce " + lines[k].name + " — dopisz np. „66 mg/g”."); });
   // drop brands with no flavours
   Object.keys(lines).forEach(function (k) { if (!products.some(function (p) { return p.line === k; })) { warnings.push("Marka bez smaków pominięta: " + lines[k].name); delete lines[k]; } });
   return { menu: { lines: lines, products: products }, warnings: warnings };
