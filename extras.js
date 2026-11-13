@@ -89,7 +89,7 @@
       again.href = S.igUrl(); again.target = "_blank"; again.rel = "noopener";
       again.addEventListener("click", function (e) {
         e.preventDefault();
-        S.startOrder(S.orderMessageFor(ordered));    // same "order copied" guide as the basket
+        S.startOrder(S.orderMessageFor(ordered), [{ slug: S.slugOf(ordered), qty: 1 }]);    // same "order copied" guide as the basket
       });
       txt.appendChild(again);
     }

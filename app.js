@@ -1093,9 +1093,10 @@
   // ---------- "order copied" guide ----------
   // Instagram can't pre-fill a DM. Copy the order, explain the 3 taps, then open the chat.
   var guideMsg = "", guideFromBasket = false;
-  function startOrder(message, fromBasket) {
+  function startOrder(message, fromBasket, items) {
     guideMsg = message; guideFromBasket = !!fromBasket;
     copyText(message);
+    notifySeller(items);
     $("gMsg").textContent = message;
     $("gDone").hidden = !fromBasket;
     $("gOpen").href = "https://ig.me/m/" + encodeURIComponent(CFG.instagram);
@@ -1103,6 +1104,22 @@
     if ($("toast")) $("toast").classList.remove("show");   // don't cover the guide
     $("guide").hidden = false;
     document.body.classList.add("sheet-open");
+  }
+  // Tell the seller's Telegram bot about the order, so they can confirm the sale and the bot keeps
+  // stock up to date. Stock numbers stay in the bot: nothing comes back to the page.
+  // The same basket isn't sent twice within 30 minutes (e.g. tapping "send" again).
+  function notifySeller(items) {
+    if (isDemo || !items || !items.length) return;
+    var ref = number || "", key = JSON.stringify([items, ref]), sent = {};
+    try { sent = JSON.parse(sessionStorage.getItem("snus-sent") || "{}"); } catch (e) {}
+    if (sent[key] && Date.now() - sent[key] < 30 * 60e3) return;
+    sent[key] = Date.now();
+    try { sessionStorage.setItem("snus-sent", JSON.stringify(sent)); } catch (e) {}
+    var id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toLowerCase();
+    try {
+      fetch("/api/order", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: id, items: items, ref: ref }) }).catch(function () {});
+    } catch (e) {}
   }
   function closeGuide() { $("guide").hidden = true; document.body.classList.remove("sheet-open"); }
   function setupGuide() {
@@ -1128,7 +1145,7 @@
     $("igBtn").addEventListener("click", function (e) {
       e.preventDefault();
       if (window.va) window.va("event", { name: "Instagram order", data: { items: basket.length, pieces: basketCount() } });
-      startOrder(basketMessage(), true);
+      startOrder(basketMessage(), true, basket.map(function (it) { return { slug: it.slug, qty: it.qty }; }));
     });
     setupGuide();
     window.addEventListener("storage", function (e) { if (e.key === BASKET_KEY) { loadBasket(); renderBasket(); } });   // other open tabs
@@ -1241,7 +1258,7 @@
     fmtDate: fmtDate, prettyNumber: prettyNumber, statusText: statusText, loadStatuses: loadStatuses,
     toast: function (m) { toast(m); }, copyText: copyText,
     products: function () { return CFG.products || []; }, slugOf: slugOf, productTitle: productTitle, lineOf: lineOf, drawTin: drawTin,
-    orderMessageFor: orderMessageFor, startOrder: function (msg) { startOrder(msg, false); },
+    orderMessageFor: orderMessageFor, startOrder: function (msg, items) { startOrder(msg, false, items); },
     igUrl: function () { return "https://ig.me/m/" + encodeURIComponent(CFG.instagram); },
     selectProductBySlug: function (slug) {
       var list = CFG.products || [], found = -1;

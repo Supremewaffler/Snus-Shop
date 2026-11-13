@@ -133,7 +133,7 @@ To update the artwork, replace these files with new versions of the same size. P
 
 ## Telegram bot
 
-`api/telegram.js` is a Vercel serverless function. Telegram sends the bot's messages to it, and it saves menu changes to `menu.js` in this repository through the GitHub API, after which Vercel redeploys the site. `api/_menu.js` reads the seller's menu text. Setup and commands are in [TELEGRAM-BOT.md](TELEGRAM-BOT.md). The bot commits to the main branch, so pull before making your own changes.
+`api/telegram.js` is a Vercel serverless function. Telegram sends the bot's messages to it, and it saves menu changes to `menu.js` in this repository through the GitHub API, after which Vercel redeploys the site. `api/_menu.js` reads the seller's menu text, and `api/_lib.js` holds the shared Telegram/GitHub helpers. `api/order.js` receives orders from the basket ("Send order on Instagram") and sends them to the sellers in Telegram with a confirm button. Stock levels are private: they're kept encrypted in `data/stock.enc` (key derived from the bot token), never in `menu.js` and never sent to the page. `vercel.json` skips the redeploy when a commit only changes `data/`. Setup and commands are in [TELEGRAM-BOT.md](TELEGRAM-BOT.md). The bot commits to the main branch, so pull before making your own changes.
 
 ## Updating the site
 

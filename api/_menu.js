@@ -26,6 +26,8 @@ var SPARE_COLORS = ["#b06cff", "#ff6f61", "#3d7bff", "#26c6a6", "#ffb347", "#9b5
 var RIM_COLORS = ["#d9d9de", "#ff5fa2", "#8fd8ff", "#d8b45a", "#7cdc9b", "#b39cff", "#ff9f43", "#e5484d"];
 
 var EMOJI_RUN = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator}|‍|️|[\u{1F3FB}-\u{1F3FF}])+)\s*/u;
+// stock count at the end of a flavour line ("🍉 Watermelon 6", "Cherry 20 szt.") — kept private, never on the site
+var STOCK_NUM = /\s+(\d{1,4})\s*(?:szt\.?|sztuk|pcs|x)?\s*$/i;
 var SOLD_MARK = /\s*(\(?\s*(wyprzedane|wyprzedany|wyprzedana|sold\s*out)\s*\)?|❌)\s*/gi;
 
 function slugify(s) {
@@ -36,6 +38,8 @@ function plain(s) {   // for matching: lower case, no accents, no emoji/punctuat
   return slugify(s).replace(/-/g, " ").trim();
 }
 function slugOf(p) { return slugify(p.line + "-" + p.name); }
+// the website's own slug (app.js), used for basket items sent with website orders
+function webSlug(p) { return (p.line + "-" + p.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
 function words(s) { return s.replace(/\s+/g, " ").trim().split(" ").map(function (w) { return w ? w[0].toUpperCase() + w.slice(1) : w; }).join(" "); }
 function niceBrand(s) {   // "CUBA" → "Cuba", "K#RWA MAX" → "K#rwa Max", "PABLO Exclusive" → "Pablo Exclusive"
   return s.replace(/\s+/g, " ").trim().split(" ").map(function (w) {
@@ -80,7 +84,7 @@ function parseMenu(text, current) {
     else rows.push(t);
   });
 
-  var lines = {}, products = [], warnings = [], cur = null, usedRims = [];
+  var lines = {}, products = [], warnings = [], cur = null, usedRims = [], stock = {};
   var oldLineByName = {};
   Object.keys(current.lines || {}).forEach(function (k) { oldLineByName[plain(current.lines[k].name)] = k; });
   function oldProduct(lineKey, name) {
@@ -108,6 +112,8 @@ function parseMenu(text, current) {
     var t = row.replace(/^[*•·\-–—]+\s*/, "");
     var soldOut = SOLD_MARK.test(t); SOLD_MARK.lastIndex = 0;
     t = t.replace(SOLD_MARK, " ").trim();
+    var sm = t.match(STOCK_NUM), count = null;
+    if (sm && t.slice(0, sm.index).replace(EMOJI_RUN, "").trim()) { count = +sm[1]; t = t.slice(0, sm.index).trim(); }
     var em = t.match(EMOJI_RUN), emoji = em ? em[1] : "";
     var name = words(t.slice(em ? em[0].length : 0).replace(/^[*•·\-–—\s]+/, ""));
     if (!name || !/[a-ząćęłńóśźż0-9]/i.test(name)) return;
@@ -115,14 +121,16 @@ function parseMenu(text, current) {
     var op = oldProduct(cur, name);
     var p = { line: cur, name: op ? op.name : name, emoji: emoji || (op && op.emoji) || "", color: (op && op.color) || colorFor(emoji, name) };
     if (op && op.image) p.image = op.image;
+    if (count === 0) soldOut = true;                    // "Cherry 0" = none left
     if (soldOut) p.soldOut = true;
+    if (count !== null) stock[slugOf(p)] = count;
     products.push(p);
   });
 
   Object.keys(lines).forEach(function (k) { if (!lines[k].strength) warnings.push("Brak mocy przy marce " + lines[k].name + " — dopisz np. „66 mg/g”."); });
   // drop brands with no flavours
   Object.keys(lines).forEach(function (k) { if (!products.some(function (p) { return p.line === k; })) { warnings.push("Marka bez smaków pominięta: " + lines[k].name); delete lines[k]; } });
-  return { menu: { lines: lines, products: products }, warnings: warnings };
+  return { menu: { lines: lines, products: products }, warnings: warnings, stock: stock };
 }
 
 // what changed between two menus, for the preview message
@@ -139,12 +147,14 @@ function diff(oldM, newM) {
   };
 }
 
-function formatMenu(m) {
+// stock (optional) = { slug: count }: shown in Telegram only, never written to the website
+function formatMenu(m, stock) {
   var out = [];
   Object.keys(m.lines).forEach(function (k) {
     var l = m.lines[k], items = m.products.filter(function (p) { return p.line === k; });
     out.push("📍 " + l.name + (l.strength ? " — " + l.strength : "") + " (" + items.length + ")");
-    items.forEach(function (p) { out.push("   " + (p.emoji ? p.emoji + " " : "") + p.name + (p.soldOut ? "  ❌ wyprzedane" : "")); });
+    items.forEach(function (p) { out.push("   " + (p.emoji ? p.emoji + " " : "") + p.name +
+      (stock && stock[slugOf(p)] != null ? " — " + stock[slugOf(p)] + " szt." : "") + (p.soldOut ? "  ❌ wyprzedane" : "")); });
     out.push("");
   });
   return out.join("\n").trim();
@@ -172,4 +182,4 @@ function fromFile(text) {
   return JSON.parse(text.slice(a, b + 1));
 }
 
-module.exports = { parseMenu: parseMenu, diff: diff, formatMenu: formatMenu, find: find, title: title, slugOf: slugOf, toFile: toFile, fromFile: fromFile };
+module.exports = { parseMenu: parseMenu, diff: diff, formatMenu: formatMenu, find: find, title: title, slugOf: slugOf, webSlug: webSlug, toFile: toFile, fromFile: fromFile };

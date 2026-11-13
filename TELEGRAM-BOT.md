@@ -83,17 +83,30 @@ In the group: **Add members** → search for the bot's username → add it. In a
 | `/dostepne cherry` | Cherry is available again. |
 | `/wyprzedane` or `/dostepne` on its own | Shows buttons for every flavour. |
 | `/pokaz` | Shows the menu that's on the site now. |
+| `/stan` | 🔒 Shows how many of each flavour are left. Only you see this; it's never on the site. |
+| `/stan cherry 20` | Sets Cherry's stock to 20 (e.g. after a delivery). |
+| `/odejmij cherry 2` | Takes 2 Cherry off the stock, for sales made outside the website (e.g. in DMs). |
 | `/cofnij` | Undoes the last change and restores the previous menu. |
 | `/id` | Shows your Telegram ID. |
 | `/pomoc` | Help. |
+
+## Stock and website orders
+
+Stock numbers are **private**. They live only in the bot, in an encrypted file (`data/stock.enc`) that only the bot can read. They're never on the website, and nobody can read them on GitHub.
+
+- **Set the stock:** add the number at the end of each flavour when you paste the menu, e.g. `🍒 Cherry 20` (the format in your Notes works as-is). `🍒 Cherry 0` means sold out. A flavour pasted without a number keeps its old count. Or use `/stan cherry 20`.
+- **Website orders:** when a customer taps **Wyślij zamówienie na Instagramie**, the bot messages every person in `ALLOWED_USERS` with the order and the current stock, plus **✅ Sprzedane** (Sold) and **❌ Odrzuć** (Reject) buttons. Tap ✅ once the customer has actually ordered in the DM, and the bot takes it off the stock. One tap is enough: if your cousin taps it too, it isn't counted twice.
+- **Sold out:** when a flavour reaches 0, the bot asks **"Oznaczyć jako wyprzedane na stronie?"** (Mark as sold out on the site?). Tap **✅ Tak, wyprzedane** and the site shows the sold-out sticker about 30 seconds later.
+- **Group chat (optional):** to get orders in a group too, send `/id` in the group, then add `ORDER_CHAT_ID` = that chat ID in Vercel and redeploy.
+- **Changing the bot token** makes the old stock file unreadable. Just paste the menu with numbers again.
 
 **Menu format:** the same as the one you post on Instagram. Each brand goes on its own line with its strength, and the flavours go under it, one per line, with emoji:
 
 ```
 /menu
 📍 CUBA — 66 mg/g
-🍒 Cherry
-🍇 Grape
+🍒 Cherry 20
+🍇 Grape 15
 🔥 Banana Hit wyprzedane
 
 📍 KILLA — 12 mg/g
