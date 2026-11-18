@@ -14,7 +14,8 @@ window.MENU = {
       "line": "cuba",
       "name": "Watermelon",
       "emoji": "🍉",
-      "color": "#ff5d73"
+      "color": "#ff5d73",
+      "soldOut": true
     },
     {
       "line": "cuba",
