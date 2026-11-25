@@ -98,7 +98,7 @@ Stock numbers are **private**. They live only in the bot, in an encrypted file (
 - **Website orders:** when a customer taps **Wyślij zamówienie na Instagramie**, the bot messages every person in `ALLOWED_USERS` with the order and the current stock, plus **✅ Sprzedane** (Sold) and **❌ Odrzuć** (Reject) buttons. Tap ✅ once the customer has actually ordered in the DM, and the bot takes it off the stock. One tap is enough: if your cousin taps it too, it isn't counted twice.
 - **Sold out:** when a flavour reaches 0, the bot asks **"Oznaczyć jako wyprzedane na stronie?"** (Mark as sold out on the site?). Tap **✅ Tak, wyprzedane** and the site shows the sold-out sticker about 30 seconds later.
 - **Group chat (optional):** to get orders in a group too, send `/id` in the group, then add `ORDER_CHAT_ID` = that chat ID in Vercel and redeploy.
-- **Changing the bot token** makes the old stock file unreadable. Just paste the menu with numbers again.
+- **Changing the bot token** (e.g. after making a new bot): first add `STOCK_KEY` in Vercel with the **old** `TELEGRAM_BOT_TOKEN` value, then replace `TELEGRAM_BOT_TOKEN`. The saved stock stays readable, and future token changes won't affect it. Without `STOCK_KEY`, the bot says it can't read the stock; paste the menu with numbers again to start fresh.
 
 **Menu format:** the same as the one you post on Instagram. Each brand goes on its own line with its strength, and the flavours go under it, one per line, with emoji:
 

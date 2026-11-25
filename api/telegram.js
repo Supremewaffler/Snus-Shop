@@ -140,6 +140,7 @@ function stockCommand(msg, text) {
   var q = text.replace(/^\/\w+(@\w+)?/, "").trim();
   return Promise.all([L.readMenu(), L.readStock()]).then(function (r) {
     var m = r[0].menu, st = r[1];
+    if (st.unreadable) return reply(msg, "⚠️ " + L.UNREADABLE);
     if (!q) {
       return reply(msg, "🔒 Stan magazynowy (tylko dla Ciebie, nie na stronie):\n\n" + stockList(m, st.state.stock) +
         "\n\nUstaw: /stan cherry 20 · Sprzedane poza stroną: /odejmij cherry 2");
@@ -163,6 +164,7 @@ function subtractCommand(msg, text) {
   if (!q || !nm[1]) return reply(msg, "Napisz smak i ile sztuk sprzedano, np. /odejmij cherry 2");
   return Promise.all([L.readMenu(), L.readStock()]).then(function (r) {
     var m = r[0].menu, st = r[1], hits = M.find(m, nm[1]);
+    if (st.unreadable) return reply(msg, "⚠️ " + L.UNREADABLE);
     if (hits.length !== 1) return reply(msg, hits.length ? "Pasuje kilka smaków: " + hits.map(function (p) { return M.title(m, p); }).join(", ") + ". Napisz dokładniej." : "Nie znalazłem smaku „" + nm[1] + "”.");
     var p = hits[0], k = M.slugOf(p), n = +(nm[2] || 1);
     if (st.state.stock[k] == null) return reply(msg, "Nie znam stanu dla " + M.title(m, p) + ". Ustaw go najpierw: /stan " + p.name.toLowerCase() + " 20");
@@ -227,6 +229,7 @@ function confirmOrder(cq, id, accept) {
   var msg = cq.message, base = (msg.text || "").split("\n\n👉")[0];
   return Promise.all([L.readMenu(), L.readStock()]).then(function (r) {
     var m = r[0].menu, st = r[1];
+    if (st.unreadable) return edit(msg, base + "\n\n⚠️ " + L.UNREADABLE);
     if (st.state.done.indexOf(id) >= 0) return edit(msg, base + "\n\nℹ️ To zamówienie zostało już potwierdzone albo odrzucone.");
     st.state.done.push(id);
     if (!accept) {

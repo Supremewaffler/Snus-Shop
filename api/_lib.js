@@ -16,7 +16,10 @@ var MENU_FILE = "menu.js";
 // made from the bot token. Only the bot can read them; they never reach the website.
 var STOCK_FILE = "data/stock.enc";
 
-function derive(label) { return crypto.createHash("sha256").update(label + ":" + TOKEN).digest(); }
+function derive(label, secret) { return crypto.createHash("sha256").update(label + ":" + (secret || TOKEN)).digest(); }
+// The stock file's key. STOCK_KEY (optional) keeps the stock readable when the bot token changes,
+// e.g. after making a new bot: set STOCK_KEY to the OLD token, then replace TELEGRAM_BOT_TOKEN.
+var STOCK_SECRET = (process.env.STOCK_KEY || "").trim() || TOKEN;
 var SECRET = TOKEN ? derive("snus-webhook").toString("hex").slice(0, 48) : "";
 
 // ---------- Telegram ----------
@@ -60,32 +63,35 @@ function writeMenu(menu, sha, message) { return writeFile(MENU_FILE, M.toFile(me
 // ---------- private stock file ----------
 // { stock: { "<line>-<flavour>": count }, done: [order ids already confirmed or rejected] }
 function encrypt(obj) {
-  var iv = crypto.randomBytes(12), c = crypto.createCipheriv("aes-256-gcm", derive("snus-stock"), iv);
+  var iv = crypto.randomBytes(12), c = crypto.createCipheriv("aes-256-gcm", derive("snus-stock", STOCK_SECRET), iv);
   var data = Buffer.concat([c.update(JSON.stringify(obj), "utf8"), c.final()]);
   return "snus-stock-v1\n" + Buffer.concat([iv, c.getAuthTag(), data]).toString("base64") + "\n";
 }
 function decrypt(text) {
   var raw = Buffer.from(String(text).split("\n")[1] || "", "base64");
-  var d = crypto.createDecipheriv("aes-256-gcm", derive("snus-stock"), raw.subarray(0, 12));
+  var d = crypto.createDecipheriv("aes-256-gcm", derive("snus-stock", STOCK_SECRET), raw.subarray(0, 12));
   d.setAuthTag(raw.subarray(12, 28));
   return JSON.parse(Buffer.concat([d.update(raw.subarray(28)), d.final()]).toString("utf8"));
 }
 function readStock() {
   return readFile(STOCK_FILE).then(function (f) {
-    var s;
-    try { s = decrypt(f.text); } catch (e) { s = {}; }   // e.g. the bot token was changed: start again
-    return { state: { stock: s.stock || {}, done: s.done || [] }, sha: f.sha };
+    try { var s = decrypt(f.text); return { state: { stock: s.stock || {}, done: s.done || [] }, sha: f.sha }; }
+    catch (e) {   // wrong key (bot token changed without STOCK_KEY): don't overwrite it except with a fresh menu
+      return { state: { stock: {}, done: [] }, sha: f.sha, unreadable: true };
+    }
   }, function (e) {
     if (e.status === 404) return { state: { stock: {}, done: [] }, sha: null };   // no stock saved yet
     throw e;
   });
 }
+var UNREADABLE = "Nie mogę odczytać zapisanych stanów (zmienił się token bota?). Ustaw w Vercel STOCK_KEY = stary token albo wklej menu z liczbami przez /nowemenu.";
 function writeStock(state, sha, message) {
   state.done = (state.done || []).slice(-200);
   return writeFile(STOCK_FILE, encrypt(state), sha, message);
 }
 
 module.exports = {
+  UNREADABLE: UNREADABLE,
   M: M, TOKEN: TOKEN, GH_TOKEN: GH_TOKEN, ALLOWED: ALLOWED, SECRET: SECRET,
   tg: tg, who: who, allowed: allowed, orderChats: orderChats, gh: gh,
   MENU_FILE: MENU_FILE, readMenu: readMenu, writeMenu: writeMenu, readStock: readStock, writeStock: writeStock
